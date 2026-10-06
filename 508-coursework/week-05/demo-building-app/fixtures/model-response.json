@@ -1,0 +1,7 @@
+{
+  "source": "fixture",
+  "note": "Not a real model answer. This file is returned for every photo. Replace ask_model() in server.py with a real API call.",
+  "building_id": 4,
+  "confidence": 0.91,
+  "reason": "A small octagonal pavilion with a double roof, standing on a raised terrace with white balustrades, in an open lawn."
+}

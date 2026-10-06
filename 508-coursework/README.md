@@ -10,3 +10,4 @@ you come.
 - [week-02](week-02/instructions.md) a historical question, two sources, and OCR
 - [week-03](week-03/instructions.md) your data, a small database, and one skill
 - [week-04](week-04/instructions.md) a real database, and a progressive skill
+- [week-05](week-05/instructions.md) your skill reorganised, and your own app
