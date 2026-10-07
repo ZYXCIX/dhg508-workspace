@@ -1,6 +1,6 @@
 # DHG508 Critical Digital History: Hands-on Critical AI for Historians
 
-Current assignment: [Week 6: your prototype, expertise, and next test](508-coursework/week-06/instructions.md)
+Current assignment: [Week 6: your individual task and project plan](508-coursework/week-06/instructions.md)
 
 Getting started: [Week 1 — setup and your first project](508-coursework/week-01/instructions.md)
 

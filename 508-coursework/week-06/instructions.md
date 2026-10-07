@@ -4,61 +4,68 @@ Before our next class: **Wednesday 14 October 2026**.
 
 ## Tasks
 
-Bring a prototype of your own project. Show one useful path through it,
-explain the expertise that makes it yours, and identify the real difficulty
-you want to work on next. It is a prototype, not a finished product.
+This week, Bo will discuss each project with its owner and give an individual
+task. Complete the task agreed in that conversation. Next class will be a
+systematic discussion of your project plans. Standard weekly assignments
+resume next week.
 
 Continue in your existing project. Use opencode to help, and make it explain
 what it changes. Keep your own decisions visible.
 
-## Challenges
+## Your individual task this week
 
-### 1. Make one path work
+Record the task in your project's README or research notes:
 
-Choose one user, one input and one useful result. Make that path demonstrable
-with your own materials. Improve it using today's project feedback.
+- What you agreed to do.
+- Why it matters to your project.
+- What you will bring back to show progress.
+- Any question or obstacle that remains.
 
-If a part still fails, bring the current prototype and show exactly where it
-stops. Distinguish working features, saved examples and planned features.
-The classroom Guide app's prepared answers do not replace Week 5's real
-model-call task.
+Tasks may differ between projects. Do not substitute a generic assignment
+for the one agreed with Bo. Continue in your existing project and keep the
+sources and your decisions traceable.
 
-### 2. Explain your expertise and unique value
+## Prepare your plan for next class
 
-Write a short explanation in your project's README:
+Bring your current work and a short project plan explaining:
 
 - Who is this for, and what does it help them do?
 - Which materials and expertise does it depend on?
 - Which decision is yours, and why does it matter to the result?
+- What currently works, and what is the real difficulty?
+- What did your individual task change, and what will you test next?
 
-Show one concrete example. Your contribution might be the choice of sources,
-an interpretation, a way to check evidence, or a useful research workflow.
+Use your current prototype or materials to make the discussion concrete.
+If something fails, show where it stops. Distinguish working features, saved
+examples and planned features. The Guide app's prepared answers do not
+replace Week 5's real model-call task.
 
-### 3. Name the hard part and the next test
+## Topics ahead
 
-Record one real difficulty, what you have tried, and one test that would show
-progress. Put unresolved questions in `questions.md`.
+After next week's project-plan discussion, we plan five weeks of methods,
+followed by a final presentation week. The methods will include:
 
-The difficulty may concern materials, a research method, implementation or
-how someone uses the result. If your question changes, explain why and what
-you will pursue next.
+- 3D reconstruction and an exhibition space.
+- Image generation.
+- AI across the research process.
+- An introduction to historical maps.
 
-### 4. Keep the work inspectable
+We will choose additional content together. Options include role play,
+text analysis, relationship networks and more advanced source retrieval.
+Choose your top two and explain which problem in your project each would
+help solve. The order and emphasis will follow the project discussions.
 
-Update the README with how to run the prototype and what currently works.
-Keep the relevant sources and your decisions traceable. Commit meaningful
+## Keep the work inspectable
+
+Update the README when the way to run your project changes. Commit meaningful
 changes with a message explaining what changed and why, and push regularly.
-Keep API keys and large generated files out of Git.
+Keep API keys and large generated files out of Git. Put unresolved questions
+in `questions.md`.
 
 ## Bring to class
 
-A five-minute demo, with the prototype ready to open:
+- The work from your individual task.
+- Your project plan and current prototype or materials.
+- Your topic preferences, README, commit history and `questions.md`.
 
-- One path from input to useful result.
-- Your expertise and unique value, shown through a concrete decision.
-- The real difficulty, what you tried, and your next test.
-
-Also have your README, commit history and `questions.md` ready. If something
-does not run, show the actual failure and the current work so we can discuss
-it. We will use these prototypes and questions to plan the next teaching
-steps.
+We will discuss the plans carefully before setting the next standard task.

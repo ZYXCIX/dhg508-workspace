@@ -11,4 +11,4 @@ you come.
 - [week-03](week-03/instructions.md) your data, a small database, and one skill
 - [week-04](week-04/instructions.md) a real database, and a progressive skill
 - [week-05](week-05/instructions.md) your skill reorganised, and your own app
-- [week-06](week-06/instructions.md) your prototype, expertise, and next test
+- [week-06](week-06/instructions.md) your individual task and project plan
