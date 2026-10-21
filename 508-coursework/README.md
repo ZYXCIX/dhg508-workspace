@@ -13,3 +13,4 @@ you come.
 - [week-05](week-05/instructions.md) your skill reorganised, and your own app
 - [week-06](week-06/instructions.md) your individual task and project plan
 - [week-07](week-07/instructions.md) Image and 3D generation: an object with a history
+- [week-08](week-08/instructions.md) A historical simulation
