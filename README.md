@@ -1,6 +1,6 @@
 # DHG508 Critical Digital History: Hands-on Critical AI for Historians
 
-Current assignment: [Week 5: your skill reorganised, and your own app](508-coursework/week-05/instructions.md)
+Current assignment: [Week 7: Image and 3D generation, an object with a history](508-coursework/week-07/instructions.md)
 
 Getting started: [Week 1 — setup and your first project](508-coursework/week-01/instructions.md)
 
