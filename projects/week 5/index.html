@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>中国长城数据库</title>
+<style>
+  :root{
+    --bg:#f6f3ec; --panel:#fffdf8; --ink:#2b2622; --muted:#7d746a;
+    --line:#e4ddcf; --accent:#8c2f24; --accent-soft:#f3e3df;
+    --chip:#efe9dc; --chip-on:#8c2f24;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;line-height:1.6}
+  header{background:linear-gradient(180deg,#7f2a20,#6a231b);color:#fdf8f2;padding:26px 20px 22px}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px;text-align:center}
+  header h1{margin:0 0 6px;font-size:24px;letter-spacing:2px;font-weight:600}
+  main{max-width:1080px;margin:0 auto;padding:22px 20px 60px}
+  .meta{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);
+        border-radius:8px;padding:12px 16px;font-size:13px;color:var(--muted);margin-bottom:18px}
+  .meta b{color:var(--ink)}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+  .search{flex:1;min-width:220px;display:flex;gap:8px}
+  input[type=text]{flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:8px;
+                   background:var(--panel);font-size:14px;color:var(--ink)}
+  input[type=text]:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+  button{padding:9px 14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+         border-radius:8px;cursor:pointer;font-size:14px}
+  button:hover{border-color:var(--accent)}
+  button:disabled{opacity:.45;cursor:default}
+  .stats{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+         padding:12px 16px;margin-bottom:18px}
+  .statrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+  .statrow .label{font-size:12px;color:var(--muted);width:52px;flex:none}
+  .chip{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--chip);
+        font-size:12.5px;cursor:pointer;border:1px solid transparent}
+  .chip:hover{border-color:var(--accent)}
+  .chip.on{background:var(--chip-on);color:#fff}
+  .count{font-size:13px;color:var(--muted);margin:4px 0 12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+        padding:14px 16px;margin-bottom:12px}
+  .card .top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+  .id{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--muted)}
+  .badge{font-size:12px;padding:2px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent)}
+  .badge.term{background:#e6efe4;color:#3c6b39}
+  .badge.vol{background:#e8eef5;color:#38567b}
+  .text{font-family:"Songti SC","SimSun",Georgia,serif;font-size:16px;line-height:1.95;
+        text-align:justify}
+  .pager{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:22px;color:var(--muted);font-size:14px}
+  .empty{text-align:center;color:var(--muted);padding:40px 0}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 0 30px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>中国长城数据库</h1>
+    <div style="margin-top:10px">
+      <a href="/map.html" style="display:inline-block;color:#fff;background:rgba(255,255,255,.14);
+         border:1px solid rgba(255,255,255,.45);padding:6px 14px;border-radius:8px;
+         text-decoration:none;font-size:13.5px">🗺 在中国地图上查看长城位置 →</a>
+    </div>
+  </div>
+</header>
+<main>
+  <!-- 以下信息框与筛选标签由 server.py 从 greatwall.db 生成 -->
+  <div class="meta" id="meta">
+    <div><b>收录标准：</b>收录明确记载长城/边墙本体的段落：修筑、增建、损毁、地理建置、关隘、职官、方略议论等；排除比喻用法（如“倚之若长城”）及与长城无关的同名地名（长城岭、长城山、长城岛、墙子岭、蒙墙口等）和城/宫/庙/围/狱等墙。</div>
+    <div style="margin-top:4px"><b>备注：</b>长城在明代多称“边墙”，亦称“边垣/塞垣/大墙”；“长城”一词多见于关隘名及比喻</div>
+    <div style="margin-top:4px"><b>数据源：</b>明史.txt · 生成日期 2026-10-14</div>
+  </div>
+
+  <div class="controls">
+    <div class="search">
+      <input type="text" id="q" placeholder="全文检索，如：边墙 / 墩台 / 戚继光 / 花马池 …">
+      <button id="searchBtn">检索</button>
+      <button id="resetBtn">重置</button>
+    </div>
+  </div>
+
+  <div class="stats" id="stats">
+    <div class="statrow"><span class="label">类别</span><span class="chip on" data-k="category" data-v="">全部</span><span class="chip" data-k="category" data-v="修筑">修筑 48</span><span class="chip" data-k="category" data-v="损毁">损毁 13</span><span class="chip" data-k="category" data-v="战事">战事 3</span><span class="chip" data-k="category" data-v="议论">议论 3</span><span class="chip" data-k="category" data-v="作用">作用 2</span><span class="chip" data-k="category" data-v="关隘">关隘 2</span><span class="chip" data-k="category" data-v="增筑墩台">增筑墩台 2</span><span class="chip" data-k="category" data-v="方略">方略 2</span><span class="chip" data-k="category" data-v="地理建置">地理建置 1</span><span class="chip" data-k="category" data-v="职官">职官 1</span><span class="chip" data-k="category" data-v="行经">行经 1</span><span class="chip" data-k="category" data-v="边禁">边禁 1</span></div>
+    <div class="statrow"><span class="label">用词</span><span class="chip on" data-k="term" data-v="">全部</span><span class="chip" data-k="term" data-v="边墙">边墙 40</span><span class="chip" data-k="term" data-v="墙">墙 19</span><span class="chip" data-k="term" data-v="边垣">边垣 12</span><span class="chip" data-k="term" data-v="塞垣">塞垣 7</span><span class="chip" data-k="term" data-v="长城">长城 2</span><span class="chip" data-k="term" data-v="大墙">大墙 1</span></div>
+    <div class="statrow"><span class="label">部分</span><span class="chip on" data-k="section" data-v="">全部</span><span class="chip" data-k="section" data-v="列传">列传 63</span><span class="chip" data-k="section" data-v="志">志 14</span><span class="chip" data-k="section" data-v="本纪">本纪 2</span></div>
+  </div>
+  <div class="count" id="count"></div>
+  <div id="list"><div class="empty">载入中…</div></div>
+  <div class="pager" id="pager"></div>
+  <footer>数据源：《明史》· 共 79 条（简体）· 后端 server.py + greatwall.db</footer>
+</main>
+
+<script>
+/* 记载列表由后端 server.py 提供：GET /api/records?q=&category=&term=&section=&page=&page_size= */
+const state = {q:"", category:"", section:"", term:"", page:1, page_size:10};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g,
+  (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+async function api(path){
+  const res = await fetch(path);
+  if(!res.ok) throw new Error("HTTP " + res.status);
+  return res.json();
+}
+
+function queryString(){
+  const p = new URLSearchParams();
+  if(state.q) p.set("q", state.q);
+  if(state.category) p.set("category", state.category);
+  if(state.section) p.set("section", state.section);
+  if(state.term) p.set("term", state.term);
+  p.set("page", state.page);
+  p.set("page_size", state.page_size);
+  return p.toString();
+}
+
+async function loadRecords(){
+  const d = await api("/api/records?" + queryString());
+  const list = $("list");
+  if(!d.records.length){ list.innerHTML = `<div class="empty">没有匹配的记载</div>`; }
+  else {
+    list.innerHTML = d.records.map(r => `
+      <div class="card">
+        <div class="top">
+          <span class="id">${esc(r.id)}</span>
+          <span class="badge vol">${esc(r.volume)}</span>
+          <span class="badge">${esc(r.section)}</span>
+          <span class="badge">${esc(r.category)}</span>
+          ${(r.terms||[]).map(t=>`<span class="badge term">${esc(t)}</span>`).join("")}
+          <span class="id">行 ${r.line}</span>
+        </div>
+        <div class="text">${esc(r.text)}</div>
+      </div>`).join("");
+  }
+  const pages = Math.max(1, Math.ceil(d.total / d.page_size));
+  $("count").textContent = `共 ${d.total} 条　·　第 ${d.page} / ${pages} 页`;
+  $("pager").innerHTML =
+    `<button id="prev" ${d.page<=1?"disabled":""}>上一页</button>` +
+    `<span>${d.page} / ${pages}</span>` +
+    `<button id="next" ${d.page>=pages?"disabled":""}>下一页</button>` +
+    `<select id="ps">${[10,20,50,100].map(n=>`<option ${n===d.page_size?"selected":""}>${n}</option>`).join("")}</select>`;
+  $("prev").onclick = () => { if(state.page>1){ state.page--; render(); } };
+  $("next").onclick = () => { if(state.page<pages){ state.page++; render(); } };
+  $("ps").onchange = (e) => { state.page_size = +e.target.value; state.page = 1; render(); };
+}
+
+async function render(){
+  try{ await loadRecords(); }
+  catch(e){ $("list").innerHTML = `<div class="empty">加载失败：${esc(e.message)}</div>`; }
+}
+
+/* 筛选标签（生成时写入 DOM） */
+$("stats").querySelectorAll(".chip").forEach(el => {
+  el.onclick = () => {
+    const k = el.dataset.k, v = el.dataset.v;
+    state[k] = (state[k] === v) ? "" : v;
+    state.page = 1;
+    $("stats").querySelectorAll(`.chip[data-k="${k}"]`).forEach(c =>
+      c.classList.toggle("on", c.dataset.v === state[k]));
+    render();
+  };
+});
+
+$("searchBtn").onclick = () => { state.q = $("q").value.trim(); state.page = 1; render(); };
+$("q").addEventListener("keydown", (e)=>{ if(e.key==="Enter") $("searchBtn").click(); });
+$("resetBtn").onclick = () => {
+  Object.assign(state, {q:"", category:"", section:"", term:"", page:1});
+  $("q").value = "";
+  $("stats").querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c.dataset.v === ""));
+  render();
+};
+
+render();
+</script>
+</body>
+</html>

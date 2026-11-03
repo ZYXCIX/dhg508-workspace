@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>地图上的长城</title>
+<style>
+  :root{--bg:#f6f3ec;--panel:#fffdf8;--ink:#2b2622;--muted:#7d746a;--line:#e4ddcf;
+        --accent:#8c2f24;--wall:#b23a2a;--pass:#8a5a2b;--sea:#bcd6e8}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;height:100vh;
+       font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif}
+  header{background:linear-gradient(180deg,#7f2a20,#6a231b);color:#fdf8f2;padding:10px 18px;
+         display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
+  header h1{font-size:17px;margin:0;font-weight:600;letter-spacing:1px}
+  header a{color:#ffe;text-decoration:none;font-size:13px;border:1px solid rgba(255,255,255,.4);
+           padding:4px 10px;border-radius:6px}
+  header a:hover{background:rgba(255,255,255,.12)}
+  header .sp{flex:1}
+  header .hint{font-size:12px;opacity:.82}
+  header .togglebtn{background:rgba(255,255,255,.16);color:#fdf8f2;border:1px solid rgba(255,255,255,.5);
+    padding:6px 14px;border-radius:8px;font-size:13.5px;cursor:pointer}
+  header .togglebtn:hover{background:rgba(255,255,255,.3)}
+  header .curmode{font-size:12.5px;opacity:.85}
+  main{flex:1;display:flex;min-height:0}
+  #mapwrap{flex:1;position:relative;min-width:0;background:#cfe3f0}
+  #map{display:block;width:100%;height:100%;cursor:grab}
+  #map.drag{cursor:grabbing}
+  #tip{position:absolute;pointer-events:none;background:rgba(43,38,34,.92);color:#fff;font-size:12px;
+       padding:3px 8px;border-radius:5px;display:none;white-space:nowrap;transform:translate(-50%,-140%)}
+  #scale{position:absolute;right:12px;bottom:12px;background:rgba(255,253,248,.9);border:1px solid var(--line);
+         border-radius:6px;padding:3px 8px;font-size:11.5px;color:var(--muted)}
+  aside{width:316px;max-width:40vw;border-left:1px solid var(--line);background:var(--panel);
+        display:flex;flex-direction:column;min-height:0}
+  aside .sec{padding:11px 14px;border-bottom:1px solid var(--line)}
+  aside h2{font-size:12.5px;margin:0 0 8px;color:var(--muted);font-weight:600;letter-spacing:1px}
+  label.chk{display:flex;align-items:center;gap:8px;font-size:13.5px;margin:4px 0;cursor:pointer}
+  .stat{color:var(--muted);font-size:12px}
+  input[type=text]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13.5px}
+  #plist{overflow:auto;flex:1;min-height:0}
+  #plist .p{padding:6px 14px;font-size:13.5px;border-bottom:1px solid #f0ebe0;cursor:pointer}
+  #plist .p:hover{background:#f3ede0}
+  #plist .p.on{background:#f6e4df}
+  .muted{color:var(--muted);font-size:12px;padding:10px 14px}
+  button.plain{padding:6px 10px;border:1px solid var(--line);background:var(--panel);border-radius:7px;cursor:pointer;font-size:12.5px}
+  button.plain:hover{border-color:var(--accent)}
+</style>
+</head>
+<body>
+<header>
+  <h1>地图上的长城</h1>
+  <a href="/">← 记载列表</a>
+  <button class="togglebtn" id="toggleView">切换视图</button>
+  <span class="curmode" id="curmode">当前：政区图</span>
+</header>
+<main>
+  <div id="mapwrap">
+    <canvas id="map"></canvas>
+    <div id="tip"></div>
+    <div id="scale"></div>
+  </div>
+  <aside>
+    <div class="sec">
+      <h2>图层</h2>
+      <label class="chk"><input type="checkbox" id="lyrWall" checked> 明长城走向 <span class="stat" id="nWall"></span></label>
+      <label class="chk"><input type="checkbox" id="lyrPass" checked> 长城关隘 <span class="stat" id="nPass"></span></label>
+      <div style="margin-top:8px"><button class="plain" id="reset">重置视图</button></div>
+    </div>
+    <div class="sec">
+      <h2>关隘检索</h2>
+      <input type="text" id="psearch" placeholder="如：山海关 / 居庸 / 嘉峪关">
+    </div>
+    <div id="plist"><div class="muted">载入中…</div></div>
+  </aside>
+</main>
+
+<script>
+/* ---------- 投影：兰勃特等角圆锥（与 import_geo.py 完全一致）---------- */
+const R=6371008.8, d2r=Math.PI/180;
+const p1=25*d2r, p2=47*d2r, p0=35*d2r, LON0=105;
+const N=Math.log(Math.cos(p1)/Math.cos(p2))/Math.log(Math.tan(Math.PI/4+p2/2)/Math.tan(Math.PI/4+p1/2));
+const F=Math.cos(p1)*Math.pow(Math.tan(Math.PI/4+p1/2),N)/N;
+const RHO0=R*F/Math.pow(Math.tan(Math.PI/4+p0/2),N);
+function proj(lon,lat){
+  const rho=R*F/Math.pow(Math.tan(Math.PI/4+lat*d2r/2),N), th=N*(lon-LON0)*d2r;
+  return [rho*Math.sin(th), RHO0-rho*Math.cos(th)];
+}
+
+/* ---------- 状态 ---------- */
+const canvas=document.getElementById('map'), ctx=canvas.getContext('2d');
+const wrap=document.getElementById('mapwrap'), tip=document.getElementById('tip');
+const view={zoom:1,panX:0,panY:0};
+let zoomMin=1; const ZOOM_MAX=120;                        // 缩放范围（最小值由比例尺 11px≈100km 决定）
+let W=0,H=0,dpr=1,baseScale=1,cx=0,cy=0;
+let bounds=null, mode='political';
+let ocean=null, world=null, china=null, wall=null, passes=null, cborder=null;
+let terrain=null, terrainReady=false, highlight=-1;
+let screenPasses=[];
+
+const layerOn=id=>{const e=document.getElementById(id);return e?e.checked:true;};  // 无对应控件时视为常开
+const setText=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=v;};
+
+const S=()=>baseScale*view.zoom;
+const sx=x=>W/2+(x-cx)*S()+view.panX;
+const sy=y=>H/2-(y-cy)*S()+view.panY;
+
+/* ---------- 预投影 ---------- */
+function pRing(ring){ const a=new Float64Array(ring.length*2); for(let i=0;i<ring.length;i++){const q=proj(ring[i][0],ring[i][1]);a[2*i]=q[0];a[2*i+1]=q[1];} return a; }
+function pGeom(g){
+  const t=g.type,c=g.coordinates,out={polys:[],lines:[],pts:[]};
+  if(t==='Polygon') out.polys.push(c.map(pRing));
+  else if(t==='MultiPolygon') for(const poly of c) out.polys.push(poly.map(pRing));
+  else if(t==='LineString') out.lines.push(pRing(c));
+  else if(t==='MultiLineString') for(const l of c) out.lines.push(pRing(l));
+  else if(t==='Point'){const q=proj(c[0],c[1]);out.pts.push(q);}
+  return out;
+}
+
+/* ---------- 绘制辅助 ---------- */
+function pathPolys(polys){
+  ctx.beginPath();
+  for(const poly of polys) for(const ring of poly){
+    for(let i=0;i<ring.length;i+=2){ const X=sx(ring[i]),Y=sy(ring[i+1]); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y); }
+    ctx.closePath();
+  }
+}
+function pathLines(lines){
+  ctx.beginPath();
+  for(const l of lines) for(let i=0;i<l.length;i+=2){ const X=sx(l[i]),Y=sy(l[i+1]); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y); }
+}
+function resample(scr, step){                               // 按固定步长重采样屏幕折线
+  const out=[[scr[0],scr[1]]];
+  let px=scr[0], py=scr[1], rem=step;
+  for(let i=2;i<scr.length;i+=2){
+    let qx=scr[i], qy=scr[i+1];
+    let dx=qx-px, dy=qy-py, seg=Math.hypot(dx,dy);
+    while(seg>=rem&&seg>1e-6){
+      const t=rem/seg; px+=dx*t; py+=dy*t;
+      out.push([px,py]);
+      dx=qx-px; dy=qy-py; seg=Math.hypot(dx,dy); rem=step;
+    }
+    rem-=seg; px=qx; py=qy;
+  }
+  return out;
+}
+function wallPath(step,d){                                  // 城垛（方波）：沿走向交替向两侧偏移
+  const p=new Path2D();
+  for(const l of wall.lines){
+    if(l.length<4) continue;
+    const scr=new Float64Array(l.length);
+    for(let i=0;i<l.length;i+=2){ scr[i]=sx(l[i]); scr[i+1]=sy(l[i+1]); }
+    const P=resample(scr,step); if(P.length<2) continue;
+    const nrm=[];                                           // 每点的平均法线（miter）
+    for(let i=0;i<P.length;i++){
+      let ax=0, ay=0;
+      if(i>0){ const dx=P[i][0]-P[i-1][0], dy=P[i][1]-P[i-1][1], s=Math.hypot(dx,dy)||1; ax+=-dy/s; ay+=dx/s; }
+      if(i<P.length-1){ const dx=P[i+1][0]-P[i][0], dy=P[i+1][1]-P[i][1], s=Math.hypot(dx,dy)||1; ax+=-dy/s; ay+=dx/s; }
+      const n=Math.hypot(ax,ay)||1; nrm.push([ax/n, ay/n]);
+    }
+    let sign=1;
+    for(let i=0;i<P.length-1;i++){
+      const [x0,y0]=P[i], [x1,y1]=P[i+1];
+      const aX=x0+nrm[i][0]*d*sign, aY=y0+nrm[i][1]*d*sign;
+      const bX=x1+nrm[i+1][0]*d*sign, bY=y1+nrm[i+1][1]*d*sign;
+      if(i===0) p.moveTo(aX,aY); else p.lineTo(aX,aY);
+      p.lineTo(bX,bY);
+      sign=-sign;
+    }
+  }
+  return p;
+}
+
+/* ---------- 标注（预置经纬度）---------- */
+const LABELS=[];   // 已按要求移除全部文字标注（邻国、海域、中国）
+function drawLabels(){
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  for(const [text,lon,lat,kind] of LABELS){
+    if(kind==='self'&&mode==='political') continue;   // 政区图用各省名称标识，不再重复“中国”
+    const q=proj(lon,lat), X=sx(q[0]), Y=sy(q[1]);
+    if(X<-40||X>W+40||Y<-20||Y>H+20) continue;
+    const sea=kind==='sea';
+    ctx.font=(sea?'italic ':'')+(kind==='self'?'bold ':'')+(sea?12:13)+'px "Microsoft YaHei",sans-serif';
+    ctx.lineWidth=3; ctx.strokeStyle='rgba(255,255,255,.8)';
+    ctx.strokeText(text,X,Y);
+    ctx.fillStyle= sea?'#2b5f86':(kind==='self'?'#2b2622':'#444');
+    ctx.fillText(text,X,Y);
+  }
+}
+
+/* ---------- 渲染 ---------- */
+function draw(){
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#e9e6de'; ctx.fillRect(0,0,W,H);          // 画布外底色
+  if(!bounds){ positionPasses(); updateScale(); return; }
+
+  const rx=sx(bounds.minx), ry=sy(bounds.maxy);
+  const rw=sx(bounds.maxx)-rx, rh=sy(bounds.miny)-ry;
+  const vx=Math.round(W*0.10), vy=Math.round(H*0.10);      // 上下左右各向内缩 10%
+  const vw=Math.round(W*0.80), vh=Math.round(H*0.80);
+
+  ctx.save();
+  ctx.beginPath(); ctx.rect(vx,vy,vw,vh); ctx.clip();       // 政区图/地形图共用同一范围与大小
+
+  if(mode==='terrain'&&terrainReady&&terrain){
+    ctx.drawImage(terrain, rx, ry, rw, rh);
+    // 用边缘拉伸把地形铺满整个可视区，使其与政区图大小一致
+    if(terrain.naturalWidth){
+      const iw=terrain.naturalWidth, ih=terrain.naturalHeight, b=6;
+      const X0=vx, X1=vx+vw, Y0=vy, Y1=vy+vh;
+      const top=ry-Y0, bot=Y1-(ry+rh), left=rx-X0, right=X1-(rx+rw);
+      if(top>0) ctx.drawImage(terrain, 0,0, iw,b, rx,Y0, rw, top);
+      if(bot>0) ctx.drawImage(terrain, 0,ih-b, iw,b, rx,ry+rh, rw, bot);
+      if(left>0) ctx.drawImage(terrain, 0,0, b,ih, X0,ry, left, rh);
+      if(right>0) ctx.drawImage(terrain, iw-b,0, b,ih, rx+rw,ry, right, rh);
+      if(top>0&&left>0) ctx.drawImage(terrain, 0,0, b,b, X0,Y0, left, top);
+      if(top>0&&right>0) ctx.drawImage(terrain, iw-b,0, b,b, rx+rw,Y0, right, top);
+      if(bot>0&&left>0) ctx.drawImage(terrain, 0,ih-b, b,b, X0,ry+rh, left, bot);
+      if(bot>0&&right>0) ctx.drawImage(terrain, iw-b,ih-b, b,b, rx+rw,ry+rh, right, bot);
+    }
+    if(layerOn('lyrWorld')&&world){
+      for(const f of world.feats){ if(f.isCN) continue; pathPolys(f.polys);
+        ctx.lineWidth=0.6; ctx.strokeStyle='rgba(60,55,45,.45)'; ctx.stroke(); }
+    }
+    if(cborder){                                 // 用中国主张的边界覆盖邻国线（如藏南的麦克马洪线）
+      ctx.save(); pathPolys(cborder.polys); ctx.clip();
+      ctx.drawImage(terrain, rx, ry, rw, rh); ctx.restore();
+    }
+  }else{
+    ctx.fillStyle='#bcd6e8'; ctx.fillRect(rx,ry,rw,rh);     // 海域底色
+    const c=layerOn('lyrWorld');
+    if(c&&ocean){ pathPolys(ocean.polys); ctx.fillStyle='#aacbe0'; ctx.fill(); }
+    if(c&&world){
+      for(const f of world.feats){ if(f.isCN) continue; pathPolys(f.polys);
+        ctx.fillStyle='#e3ddce'; ctx.fill(); ctx.lineWidth=0.7; ctx.strokeStyle='#c3b9a3'; ctx.stroke(); }
+    }
+  }
+
+  // 中国各省（政区图：各省不同颜色）
+  if(layerOn('lyrChina')&&china){
+    for(const f of china.feats){ pathPolys(f.polys);
+      if(mode==='political'){ ctx.fillStyle=f.color; ctx.fill(); }
+      ctx.lineWidth=0.6; ctx.strokeStyle='rgba(90,80,60,.55)'; ctx.stroke(); }
+  }
+  // 中国国界（以中国主张的省级合并边界为准，含藏南、台湾）
+  if(cborder){
+    pathPolys(cborder.polys);
+    ctx.lineWidth=1.5; ctx.strokeStyle=mode==='political'?'#8a6a33':'rgba(70,60,40,.8)'; ctx.stroke();
+  }else if(layerOn('lyrChina')&&world){
+    for(const f of world.feats){ if(!f.isCN) continue; pathPolys(f.polys);
+      ctx.lineWidth=1.5; ctx.strokeStyle=mode==='political'?'#8a6a33':'rgba(70,60,40,.75)'; ctx.stroke(); }
+  }
+
+  // 省名（政区图）：先于长城绘制，使长城压在其上——省名不偏移，也不遮挡长城
+  if(layerOn('lyrLabel')&&mode==='political') drawProvinceLabels();
+
+  // 长城：城垛状（方波带状）符号
+  if(layerOn('lyrWall')&&wall){
+    const k=Math.min(Math.max(view.zoom,0.8),2.5);          // 缩放系数（封顶）
+    const step=2*k, d=0.8*k, lw=1*k;
+    const wp=wallPath(step,d);
+    ctx.lineJoin='miter'; ctx.lineCap='butt';
+    ctx.lineWidth=lw+1.6; ctx.strokeStyle='rgba(255,255,255,.75)'; ctx.stroke(wp);
+    ctx.lineWidth=lw; ctx.strokeStyle='#8a5a2b'; ctx.stroke(wp);
+  }
+  // 关隘
+  if(layerOn('lyrPass')&&passes){
+    const r=Math.max(1.0,1.1*Math.sqrt(view.zoom));
+    ctx.beginPath();
+    for(const p of passes.pts){ ctx.moveTo(sx(p[0])+r,sy(p[1])); ctx.arc(sx(p[0]),sy(p[1]),r,0,6.2832); }
+    ctx.fillStyle='#c0392b'; ctx.fill();
+    if(highlight>=0){ const p=passes.pts[highlight];
+      ctx.beginPath(); ctx.arc(sx(p[0]),sy(p[1]),9,0,6.2832); ctx.lineWidth=2; ctx.strokeStyle='#b23a2a'; ctx.stroke(); }
+  }
+
+  if(layerOn('lyrLabel')) drawLabels();
+  ctx.restore();
+
+  ctx.lineWidth=1; ctx.strokeStyle='#c9c2b4'; ctx.strokeRect(vx+0.5,vy+0.5,vw-1,vh-1);
+  positionPasses();
+  updateScale();
+}
+
+function shortProvince(n){
+  if(!n) return n;
+  return n.replace(/(特别行政区|壮族自治区|回族自治区|维吾尔自治区|自治区|省|市)$/,'');
+}
+
+function drawProvinceLabels(){
+  if(!china) return;
+  const fs=Math.min(13, 8*view.zoom);                      // 基础 8px，随缩放放大但上限 13px
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font=fs.toFixed(1)+'px "Microsoft YaHei",sans-serif';
+
+  // 长城栅格，用于避让
+  const cell=4, wallCells=new Set();
+  if(layerOn('lyrWall')&&wall){
+    for(const l of wall.lines) for(let i=0;i<l.length;i+=2)
+      wallCells.add(((sx(l[i])/cell)|0)+':'+((sy(l[i+1])/cell)|0));
+  }
+  const hitsWall=r=>{
+    const x0=Math.floor((r.x-2)/cell), x1=Math.floor((r.x+r.w+2)/cell);
+    const y0=Math.floor((r.y-2)/cell), y1=Math.floor((r.y+r.h+2)/cell);
+    for(let gx=x0;gx<=x1;gx++) for(let gy=y0;gy<=y1;gy++) if(wallCells.has(gx+':'+gy)) return true;
+    return false;
+  };
+
+  const placed=[];
+  const order=china.feats.map((f,i)=>i).sort((a,b)=>(china.feats[b].area||0)-(china.feats[a].area||0));
+  const offs=[[0,0]];                                     // 由近及远尝试，尽量贴近地理中心
+  for(const r of [fs,2*fs,3*fs]) offs.push([0,-r],[0,r],[-r,0],[r,0],[-r,-r],[r,-r],[-r,r],[r,r]);
+  for(const i of order){
+    const f=china.feats[i];
+    if(!f.short||!f.label) continue;
+    const q=proj(f.label[0],f.label[1]), X0=sx(q[0]), Y0=sy(q[1]);
+    if(X0<-60||X0>W+60||Y0<-24||Y0>H+24) continue;
+    const w=ctx.measureText(f.short).width+fs*0.4, h=fs*1.15;
+    let px=X0, py=Y0, pr=null;
+    for(const [dx,dy] of offs){
+      const r={x:X0+dx-w/2, y:Y0+dy-h/2, w, h};
+      if(hitsWall(r)) continue;
+      if(placed.some(p=>!(r.x+p.w<p.x||r.x>p.x+p.w||r.y+p.h<p.y||r.y>p.y+p.h))) continue;
+      px=X0+dx; py=Y0+dy; pr=r; break;
+    }
+    if(!pr) continue;                                     // 与长城或其它名称冲突则不出图，确保互不遮挡
+    placed.push(pr);
+    ctx.lineWidth=Math.max(0.8,fs*0.22); ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.strokeText(f.short,px,py);
+    ctx.fillStyle='#3a332c'; ctx.fillText(f.short,px,py);
+  }
+}
+
+function updateScale(){
+  const x1=sx(cx), x2=sx(cx+100000);            // 100 km
+  document.getElementById('scale').textContent='⟵ '+Math.round(Math.abs(x2-x1))+' px ≈ 100 km';
+}
+
+/* ---------- 交互 ---------- */
+let drag=null;
+canvas.addEventListener('mousedown',e=>{drag={x:e.clientX,y:e.clientY,px:view.panX,py:view.panY};canvas.classList.add('drag');});
+window.addEventListener('mouseup',()=>{drag=null;canvas.classList.remove('drag');});
+canvas.addEventListener('mousemove',e=>{
+  if(drag){ view.panX=drag.px+(e.clientX-drag.x); view.panY=drag.py+(e.clientY-drag.y); clampPan(); draw(); return; }
+  hoverTest(e);
+});
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  setZoom(view.zoom*(e.deltaY<0?1.15:1/1.15));
+  draw();
+},{passive:false});
+function centerOn(px,py,zoom){                              // 关隘定位：居中并缩放
+  if(zoom) view.zoom=Math.min(ZOOM_MAX,Math.max(zoomMin,zoom));
+  const s=S(); view.panX=-(px-cx)*s; view.panY=(py-cy)*s;
+  clampPan(); draw();
+}
+function setZoom(z){ view.zoom=Math.min(ZOOM_MAX,Math.max(zoomMin,z)); clampPan(); }   // 统一入口：缩放下限=11px≈100km
+function clampPan(){                                        // 限制拖动范围：不超出地图边界
+  if(!bounds) return;
+  const s=S(), fw=(bounds.maxx-bounds.minx)*s, fh=(bounds.maxy-bounds.miny)*s;
+  const vw=W*0.80, vh=H*0.80;
+  view.panX = fw<=vw ? 0 : Math.max(-(fw-vw)/2, Math.min((fw-vw)/2, view.panX));
+  view.panY = fh<=vh ? 0 : Math.max(-(fh-vh)/2, Math.min((fh-vh)/2, view.panY));
+}
+
+function positionPasses(){
+  screenPasses=[];
+  if(!passes||!layerOn('lyrPass')) return;
+  for(let i=0;i<passes.pts.length;i++) screenPasses.push([sx(passes.pts[i][0]),sy(passes.pts[i][1]),i]);
+}
+function hoverTest(e){
+  const rect=canvas.getBoundingClientRect(), mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  let best=-1,bd=49;
+  for(const [x,y,i] of screenPasses){ const d=(x-mx)**2+(y-my)**2; if(d<bd){bd=d;best=i;} }
+  if(best>=0){ tip.style.display='block'; tip.style.left=mx+'px'; tip.style.top=my+'px'; tip.textContent=passes.names[best]||('关隘 #'+best); }
+  else tip.style.display='none';
+}
+canvas.addEventListener('mouseleave',()=>{tip.style.display='none';});
+
+/* ---------- 模式 / 图层 ---------- */
+function setMode(m){
+  mode=m;
+  document.getElementById('curmode').textContent='当前：'+(m==='political'?'政区图':'地形图');
+  draw();
+}
+document.getElementById('toggleView').onclick=()=> setMode(mode==='political'?'terrain':'political');
+['lyrWall','lyrPass'].forEach(id=>document.getElementById(id).onchange=draw);
+document.getElementById('reset').onclick=()=>{view.panX=view.panY=0;setZoom(zoomMin);highlight=-1;refreshListSel();draw();};
+
+/* ---------- 关隘列表 ---------- */
+function buildPassList(){
+  const box=document.getElementById('plist');
+  const render=kw=>{
+    const items=[];
+    for(let i=0;i<passes.names.length;i++){const n=passes.names[i]||('关隘 #'+i); if(!kw||n.includes(kw)) items.push([i,n]);}
+    box.innerHTML=items.length?'':'<div class="muted">无匹配关隘</div>';
+    for(const [i,n] of items){const d=document.createElement('div');d.className='p'+(i===highlight?' on':'');d.textContent=n;
+      d.onclick=()=>{highlight=i;centerOn(passes.pts[i][0],passes.pts[i][1],Math.max(view.zoom,5));refreshListSel();};box.appendChild(d);}
+  };
+  document.getElementById('psearch').oninput=e=>render(e.target.value.trim());
+  buildPassList.render=render; render('');
+}
+function refreshListSel(){ if(buildPassList.render) buildPassList.render(document.getElementById('psearch').value.trim()); }
+
+/* ---------- 载入 ---------- */
+async function getJSON(u){const r=await fetch(u);if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}
+
+async function load(){
+  const rasters=await getJSON('/api/geo/rasters');
+  const t=rasters.find(r=>r.name==='terrain');
+  bounds={minx:t.minx,miny:t.miny,maxx:t.maxx,maxy:t.maxy};
+
+  const [oc,wd,ch,wl,ps,cb]=await Promise.all([
+    getJSON('/api/geo/ocean'),getJSON('/api/geo/world'),getJSON('/api/geo/china'),
+    getJSON('/api/geo/greatwall'),getJSON('/api/geo/passes'),getJSON('/api/geo/china_border')
+  ]);
+
+  ocean={polys:[]}; for(const f of oc.features){const g=pGeom(f.geometry);ocean.polys.push(...g.polys);}
+  world={feats:[]}; for(const f of wd.features){const g=pGeom(f.geometry);
+    world.feats.push({polys:g.polys,isCN:(f.properties.ISO_A2||'')==='CN',name:f.properties.name||''});}
+  china={feats:[]}; for(const f of ch.features){const g=pGeom(f.geometry);
+    china.feats.push({polys:g.polys,name:f.properties.name||'',
+      label:f.properties.centroid||f.properties.center||null});}   // 地理中心（无则用行政中心）
+  china.feats.forEach((f,i)=>{ f.color=`hsl(${(i*137.508)%360},55%,80%)`;
+    let mnx=1e18,mxx=-1e18,mny=1e18,mxy=-1e18;
+    for(const poly of f.polys) for(const ring of poly) for(let k=0;k<ring.length;k+=2){
+      const x=ring[k],y=ring[k+1];
+      if(x<mnx)mnx=x; if(x>mxx)mxx=x; if(y<mny)mny=y; if(y>mxy)mxy=y; }
+    f.area=(mxx-mnx)*(mxy-mny); f.short=shortProvince(f.name); });   // 颜色 + 面积 + 简称
+  wall={lines:[]}; for(const f of wl.features){const g=pGeom(f.geometry);wall.lines.push(...g.lines);}
+  passes={pts:[],names:[]}; for(const f of ps.features){const g=pGeom(f.geometry);passes.pts.push(g.pts[0]);passes.names.push(f.properties.name||'');}
+  cborder={polys:[]}; for(const f of cb.features){const g=pGeom(f.geometry);cborder.polys.push(...g.polys);}
+
+  setText('nWorld','('+wd.features.length+')');
+  setText('nChina','('+ch.features.length+')');
+  setText('nWall','('+wl.features.length+' 段)');
+  setText('nPass','('+ps.features.length+')');
+
+  terrain=new Image(); terrain.onload=()=>{terrainReady=true;draw();}; terrain.src='/api/geo/raster/terrain';
+
+  cx=(bounds.minx+bounds.maxx)/2; cy=(bounds.miny+bounds.maxy)/2;
+  resize(); buildPassList();
+}
+
+function resize(){
+  dpr=window.devicePixelRatio||1; W=wrap.clientWidth; H=wrap.clientHeight;
+  canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr);
+  if(bounds){
+    const padX=Math.max(20, W*0.10), padY=24;   // 左右留白，使地图两侧向中间收
+    baseScale=Math.min((W-2*padX)/(bounds.maxx-bounds.minx),(H-2*padY)/(bounds.maxy-bounds.miny));
+    zoomMin=11/(100000*baseScale);              // 缩放下限：比例尺最小 11px ≈ 100 km
+    setZoom(view.zoom); }
+  draw();
+}
+window.addEventListener('resize',()=>{ if(bounds) resize(); });
+
+load().catch(e=>{document.getElementById('plist').innerHTML='<div class="muted">载入失败：'+e.message+'</div>';});
+</script>
+</body>
+</html>
