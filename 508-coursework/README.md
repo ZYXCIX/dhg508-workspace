@@ -14,3 +14,4 @@ you come.
 - [week-06](week-06/instructions.md) your individual task and project plan
 - [week-07](week-07/instructions.md) Image and 3D generation: an object with a history
 - [week-08](week-08/instructions.md) A historical simulation
+- [week-09](week-09/instructions.md) Present your design, historical significance, scholarship and technical stack
