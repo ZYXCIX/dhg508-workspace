@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>周守藏室 · 3D 低模场景</title>
+<style>
+  :root{
+    --ink:#0b0907;
+    --paper:#e9dcc0;
+    --muted:#9b8a6b;
+    --gold:#c9a227;
+    --red:#8f3b2e;
+    --serif:"Songti SC","Noto Serif SC","Source Han Serif SC","STSong","SimSun",serif;
+    --sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--ink);color:var(--paper);font-family:var(--sans);overflow:hidden}
+  #stage{position:fixed;inset:0;display:block}
+  #vignette{
+    position:fixed;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse at center,rgba(0,0,0,0) 42%,rgba(0,0,0,.55) 100%);
+  }
+  #title{
+    position:fixed;top:28px;left:32px;z-index:3;pointer-events:none;
+    text-shadow:0 2px 12px rgba(0,0,0,.8);
+  }
+  #title .kicker{font-size:10px;letter-spacing:.28em;color:var(--muted);margin-bottom:8px}
+  #title h1{font-family:var(--serif);font-weight:600;font-size:clamp(22px,3.2vw,40px);letter-spacing:.16em;margin:0;color:#f1e4c6}
+  #title p{margin:8px 0 0;font-size:12px;letter-spacing:.08em;color:#b9a888}
+  #controls{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:4;
+    display:flex;gap:8px;flex-wrap:wrap;justify-content:center;
+    padding:8px 10px;background:rgba(14,11,8,.78);border:1px solid #4a3a2a;
+    box-shadow:0 8px 30px rgba(0,0,0,.5);backdrop-filter:blur(6px);
+  }
+  button{
+    font-family:var(--sans);font-size:12px;letter-spacing:.08em;color:#d8c8a8;
+    background:rgba(30,24,18,.85);border:1px solid #5a4a36;padding:7px 11px;cursor:pointer;
+    transition:border-color .15s,color .15s,background .15s;
+  }
+  button:hover{border-color:var(--gold);color:#fff5df;background:rgba(55,42,28,.9)}
+  button[aria-pressed="true"]{border-color:var(--gold);color:#ffe9a8}
+  #note{
+    position:fixed;right:24px;bottom:26px;z-index:3;max-width:280px;
+    font-size:10px;line-height:1.7;color:#7d6c50;text-align:right;
+  }
+  #stage{transition:filter 1.2s ease,transform 1.2s ease}
+  body.entering #stage{filter:blur(7px) brightness(.42) saturate(.75);transform:scale(1.03)}
+  #entrance{
+    position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at 50% 42%,rgba(20,15,10,.55),rgba(5,4,3,.96) 72%);
+    transition:opacity 1.1s ease;
+  }
+  #entrance.hide{opacity:0;pointer-events:none}
+  #entrance .inner{text-align:center;max-width:660px;padding:30px}
+  #entrance .seal{
+    width:52px;height:52px;background:var(--red);color:#f6e6c8;display:flex;align-items:center;justify-content:center;
+    font-family:var(--serif);font-size:28px;margin:0 auto 18px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.25);
+  }
+  #entrance h1{
+    margin:0;font-family:var(--serif);font-weight:600;font-size:clamp(34px,6vw,72px);
+    letter-spacing:.30em;text-indent:.30em;color:#f1e4c6;text-shadow:0 2px 0 #000;
+  }
+  #entrance .sub{margin-top:12px;font-size:clamp(12px,1.5vw,15px);letter-spacing:.24em;color:#b9a888}
+  #entrance .rule{
+    width:140px;height:1px;margin:22px auto;
+    background:linear-gradient(90deg,transparent,#6b5636,transparent);
+  }
+  #entrance .lead{margin:0;font-size:13px;line-height:1.9;color:#a8977a;letter-spacing:.06em}
+  #entrance .enter{
+    margin-top:26px;font-size:14px;padding:11px 30px;letter-spacing:.30em;
+    border-color:var(--gold);color:#ffe9a8;background:rgba(45,34,22,.75);
+  }
+  #entrance .enter:disabled{opacity:.45;cursor:wait;letter-spacing:.12em}
+  #entrance .status{margin-top:10px;font-size:10px;letter-spacing:.12em;color:#7d6c50}
+  #entrance .links{margin-top:16px;font-size:11px;color:#8f7f62}
+  #entrance .links a{color:#b9a888;text-decoration:none;border-bottom:1px solid #4a3a2a;padding-bottom:1px}
+  #entrance .links a:hover{color:#ffe9a8;border-color:var(--gold)}
+  body:not(.entered) #title, body:not(.entered) #controls, body:not(.entered) #note{
+    opacity:0;pointer-events:none;
+  }
+  #title,#controls,#note{transition:opacity .9s ease}
+  #error{
+    position:fixed;inset:0;z-index:12;display:none;align-items:center;justify-content:center;
+    background:rgba(7,5,4,.94);padding:30px;text-align:center;
+  }
+  #error.show{display:flex}
+  #error div{max-width:520px;font-size:13px;line-height:1.8;color:#c8b795}
+  @media (max-width:620px){
+    #title{top:16px;left:16px}
+    #note{display:none}
+    #controls{bottom:14px;width:calc(100% - 24px)}
+    button{flex:1;font-size:11px}
+  }
+</style>
+</head>
+<body class="entering">
+<canvas id="stage"></canvas>
+<div id="vignette"></div>
+
+<div id="title">
+  <div class="kicker">WEEK 09 · 3D LOW-POLY SCENE</div>
+  <h1>周守藏室</h1>
+  <p>孔子问礼 · 低模 3D 重建（教学拟构）</p>
+</div>
+
+<div id="controls">
+  <button id="btnPlay" aria-label="暂停或播放">暂停</button>
+  <button id="btnRotate" aria-pressed="false" aria-label="自动旋转">自动旋转</button>
+  <button id="btnReset" aria-label="重置视角">重置视角</button>
+</div>
+
+<div id="note">
+  低模 3D 场景，非考古复原。<br>
+  拖动旋转 · 滚轮缩放 · 右键平移
+</div>
+
+<div id="entrance">
+  <div class="inner">
+    <div class="seal">周</div>
+    <h1>守藏室</h1>
+    <div class="sub">孔子问礼 · 低模 3D</div>
+    <div class="rule"></div>
+    <p class="lead">一个可以走进去的周守藏室。<br>拖动旋转，滚轮缩放；听两人说话，也看他们沉默。</p>
+    <button id="btnEnter" class="enter" disabled>正在准备场景…</button>
+    <div class="status" id="enterStatus">加载模型中……</div>
+    <div class="links">
+      <a href="./dialogue_scene.html">看 2D 像素对话</a>
+      <span> · </span>
+      <a href="../research/notes/source_database.md">史料说明</a>
+    </div>
+  </div>
+</div>
+
+<div id="error">
+  <div id="errorText">
+    3D 模型加载失败。请确认 <code>assets/confucius_laozi_3d.glb</code> 存在，并用本地服务器打开本页。
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from './vendor/loaders/GLTFLoader.js';
+import { OrbitControls } from './vendor/controls/OrbitControls.js';
+
+const canvas = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.3;
+renderer.shadowMap.enabled = false;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#0b0907');
+scene.fog = new THREE.Fog('#0b0907', 9, 24);
+
+const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 2.6, 5.8);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 1.05, -0.4);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.minDistance = 3.2;
+controls.maxDistance = 13;
+controls.maxPolarAngle = Math.PI * 0.52;
+controls.autoRotateSpeed = 0.55;
+controls.update();
+
+// Lights tuned for the exported materials (no baked lights in the GLB).
+scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+scene.add(new THREE.HemisphereLight(0x9fb6d8, 0x2a1c12, 1.2));
+
+const key = new THREE.DirectionalLight(0xd8e6ff, 2.4);
+key.position.set(2.5, 5.2, 3.8);
+key.castShadow = true;
+key.shadow.mapSize.set(1024, 1024);
+key.shadow.camera.near = 0.5;
+key.shadow.camera.far = 18;
+key.shadow.camera.left = -7;
+key.shadow.camera.right = 7;
+key.shadow.camera.top = 7;
+key.shadow.camera.bottom = -5;
+scene.add(key);
+
+const warm = new THREE.PointLight(0xffb066, 22, 9, 2);
+warm.position.set(0.32, 1.15, -0.3);
+warm.castShadow = true;
+warm.shadow.mapSize.set(512, 512);
+scene.add(warm);
+
+const front = new THREE.PointLight(0xffd2a0, 10, 10, 2);
+front.position.set(0, 1.8, 3.2);
+scene.add(front);
+
+let mixer = null;
+let clips = [];
+let playing = true;
+let autoRotate = false;
+
+const clock = new THREE.Clock();
+const entrance = document.getElementById('entrance');
+const btnEnter = document.getElementById('btnEnter');
+const enterStatus = document.getElementById('enterStatus');
+const error = document.getElementById('error');
+
+let ready = false;
+let entered = false;
+const intro = {
+  active: false,
+  t: 0,
+  duration: 2.4,
+  fromPos: new THREE.Vector3(0, 2.15, 8.0),
+  toPos: new THREE.Vector3(0, 2.6, 5.8),
+  fromTarget: new THREE.Vector3(0, 1.0, -0.2),
+  toTarget: new THREE.Vector3(0, 1.05, -0.4)
+};
+const introTarget = new THREE.Vector3();
+controls.enabled = false;
+
+const loader = new GLTFLoader();
+loader.load(
+  './assets/confucius_laozi_3d.glb',
+  (gltf) => {
+    scene.add(gltf.scene);
+    gltf.scene.traverse((o) => {
+      if (o.isMesh) {
+        o.castShadow = true;
+        o.receiveShadow = true;
+      }
+    });
+
+    // The Blender export writes one clip per animated object; play them all.
+    mixer = new THREE.AnimationMixer(gltf.scene);
+    clips = gltf.animations || [];
+    clips.forEach((clip) => {
+      const action = mixer.clipAction(clip);
+      action.setLoop(THREE.LoopRepeat, Infinity);
+      action.play();
+    });
+
+    ready = true;
+    btnEnter.disabled = false;
+    btnEnter.textContent = '进入守藏室';
+    enterStatus.textContent = '场景已就绪';
+
+    // Preview shortcut for screenshots / slides.
+    if (new URLSearchParams(location.search).get('enter') === '1') {
+      setTimeout(enterScene, 300);
+    }
+  },
+  (xhr) => {
+    if (xhr.total) {
+      enterStatus.textContent = '加载模型 ' + Math.round((xhr.loaded / xhr.total) * 100) + '%';
+    }
+  },
+  (err) => {
+    console.error(err);
+    enterStatus.textContent = '模型加载失败';
+    entrance.classList.add('hide');
+    error.classList.add('show');
+  }
+);
+
+function enterScene() {
+  if (!ready || entered) return;
+  entered = true;
+  document.body.classList.remove('entering');
+  document.body.classList.add('entered');
+  entrance.classList.add('hide');
+  intro.active = true;
+  intro.t = 0;
+  camera.position.copy(intro.fromPos);
+  controls.target.copy(intro.fromTarget);
+  camera.lookAt(intro.fromTarget);
+  clock.start();
+}
+
+btnEnter.addEventListener('click', enterScene);
+
+const btnPlay = document.getElementById('btnPlay');
+const btnRotate = document.getElementById('btnRotate');
+const btnReset = document.getElementById('btnReset');
+
+btnPlay.addEventListener('click', () => {
+  playing = !playing;
+  btnPlay.textContent = playing ? '暂停' : '播放';
+});
+
+btnRotate.addEventListener('click', () => {
+  autoRotate = !autoRotate;
+  controls.autoRotate = autoRotate;
+  btnRotate.setAttribute('aria-pressed', String(autoRotate));
+});
+
+btnReset.addEventListener('click', () => {
+  intro.active = false;
+  camera.position.copy(intro.toPos);
+  controls.target.copy(intro.toTarget);
+  if (entered) {
+    controls.enabled = true;
+    controls.update();
+  }
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+
+  if (entered && mixer && playing) mixer.update(dt);
+
+  if (intro.active) {
+    intro.t += dt;
+    const p = Math.min(1, intro.t / intro.duration);
+    const e = 1 - Math.pow(1 - p, 3);
+    camera.position.lerpVectors(intro.fromPos, intro.toPos, e);
+    introTarget.lerpVectors(intro.fromTarget, intro.toTarget, e);
+    camera.lookAt(introTarget);
+    if (p >= 1) {
+      intro.active = false;
+      controls.target.copy(intro.toTarget);
+      controls.enabled = true;
+      controls.update();
+    }
+  } else if (entered) {
+    controls.update();
+  }
+
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>

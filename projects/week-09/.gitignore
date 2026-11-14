@@ -1,0 +1,24 @@
+# Large generated or local-only artifacts
+artifacts/**
+!artifacts/
+!artifacts/README.md
+
+# Local databases
+*.sqlite
+*.sqlite3
+*.db
+*.duckdb
+
+# Reslides dev cache
+.vite/
+node_modules/
+
+# Python/Notebook noise
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# OS/editor noise
+.DS_Store
+.vscode/
+.idea/

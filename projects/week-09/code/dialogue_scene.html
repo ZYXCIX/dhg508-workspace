@@ -1,0 +1,1779 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>周守藏室 · 孔子问礼</title>
+<style>
+  :root{
+    --ink:#17130f;
+    --ink2:#241d16;
+    --paper:#e9dcc0;
+    --paper2:#cdbc9a;
+    --muted:#9b8a6b;
+    --red:#8f3b2e;
+    --red2:#b04a38;
+    --gold:#c9a227;
+    --line:#4a3a2a;
+    --serif:"Songti SC","Noto Serif SC","Source Han Serif SC","STSong","SimSun",serif;
+    --sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#0b0907;color:var(--paper);font-family:var(--sans)}
+  body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:22px}
+  #app{width:min(1120px,100%)}
+
+  #frame{
+    position:relative;aspect-ratio:16/9;background:#000;overflow:hidden;
+    border:2px solid #3a2f26;
+    box-shadow:0 0 0 4px #15110d, 0 24px 70px rgba(0,0,0,.65);
+  }
+  canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+  #scanlines{
+    position:absolute;inset:0;pointer-events:none;opacity:.055;
+    background:repeating-linear-gradient(to bottom,rgba(255,255,255,.5) 0 1px,transparent 1px 3px);
+    mix-blend-mode:overlay;
+  }
+
+  /* ---------- title ---------- */
+  #titleCard{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at center,rgba(20,15,10,.55),rgba(5,4,3,.94) 70%);
+    z-index:6;transition:opacity 1.1s ease;text-align:center;padding:24px;
+  }
+  #titleCard.hide{opacity:0;pointer-events:none}
+  .seal{
+    width:54px;height:54px;background:var(--red);color:#f6e6c8;display:flex;align-items:center;justify-content:center;
+    font-family:var(--serif);font-size:30px;line-height:1;box-shadow:inset 0 0 0 2px rgba(0,0,0,.25);
+    margin-bottom:18px;letter-spacing:0;
+  }
+  #titleCard h1{
+    margin:0;font-family:var(--serif);font-weight:600;font-size:clamp(30px,5.2vw,60px);
+    letter-spacing:.28em;text-indent:.28em;color:#f1e4c6;text-shadow:0 2px 0 #000;
+  }
+  #titleCard .sub{
+    margin-top:14px;font-size:clamp(12px,1.5vw,16px);letter-spacing:.22em;color:#b9a888;
+  }
+  #titleCard .tag{
+    margin-top:26px;font-size:11px;letter-spacing:.18em;color:#7d6c50;
+    border-top:1px solid #3a2f22;border-bottom:1px solid #3a2f22;padding:6px 12px;
+  }
+
+  /* ---------- controls ---------- */
+  #controls{
+    position:absolute;top:10px;right:10px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;z-index:7;
+  }
+  button{
+    font-family:var(--sans);font-size:12px;letter-spacing:.08em;color:#d8c8a8;
+    background:rgba(18,14,10,.82);border:1px solid #5a4a36;padding:6px 9px;cursor:pointer;
+    transition:border-color .15s,color .15s,background .15s;box-shadow:0 2px 0 rgba(0,0,0,.5);
+  }
+  button:hover{border-color:var(--gold);color:#fff8e6;background:rgba(40,30,20,.9)}
+  button:active{transform:translateY(1px);box-shadow:none}
+  button[aria-pressed="true"]{border-color:var(--gold);color:#ffe9a8}
+
+  /* ---------- dialogue ---------- */
+  #hud{
+    position:absolute;left:0;right:0;bottom:0;z-index:4;padding:26px clamp(14px,3vw,34px) clamp(12px,2vw,20px);
+    background:linear-gradient(to bottom,rgba(8,6,4,0) 0%,rgba(8,6,4,.72) 30%,rgba(8,6,4,.94) 100%);
+    opacity:0;transform:translateY(8px);transition:opacity .5s ease,transform .5s ease;pointer-events:none;
+  }
+  #hud.show{opacity:1;transform:none}
+  #speakerRow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  #speaker{
+    display:inline-block;background:var(--red);color:#f8e9c9;font-family:var(--serif);
+    font-size:clamp(13px,1.5vw,17px);letter-spacing:.18em;padding:3px 12px 2px;
+    box-shadow:2px 2px 0 rgba(0,0,0,.5);
+  }
+  #speaker.lao{background:#5a4a33}
+  #speaker.narrator{background:#2c2a24;color:#c9bda4}
+  #sourceTag{font-size:10px;letter-spacing:.1em;color:#8a7a5a}
+  #classical{
+    margin:0;font-family:var(--serif);font-size:clamp(15px,2.05vw,23px);line-height:1.72;
+    color:#f3e7ca;letter-spacing:.03em;text-shadow:0 1px 0 #000;min-height:1.7em;
+  }
+  #vernacular{
+    margin:6px 0 0;font-size:clamp(11px,1.25vw,14px);line-height:1.6;color:#b7a684;
+  }
+  #vernacular[hidden]{display:none}
+  #hint{
+    position:absolute;right:clamp(14px,3vw,34px);bottom:clamp(10px,1.6vw,16px);
+    font-size:10px;letter-spacing:.14em;color:#7d6c50;animation:blink 1.6s steps(2,end) infinite;
+  }
+  @keyframes blink{50%{opacity:.25}}
+
+  /* ---------- source panel ---------- */
+  #sourcePanel{
+    position:absolute;top:0;right:0;bottom:0;width:min(370px,86%);z-index:8;
+    background:rgba(13,10,7,.97);border-left:1px solid #4a3a2a;padding:20px 20px 30px;
+    transform:translateX(101%);transition:transform .32s ease;overflow:auto;
+  }
+  #sourcePanel.open{transform:none}
+  #sourcePanel h2{margin:0 0 4px;font-family:var(--serif);font-size:18px;letter-spacing:.12em;color:#e7d6b2}
+  #sourcePanel .small{font-size:11px;line-height:1.6;color:#8f7f62}
+  #sourcePanel hr{border:0;border-top:1px solid #3a2f22;margin:14px 0}
+  #sourcePanel h3{margin:16px 0 6px;font-size:11px;letter-spacing:.18em;color:var(--gold);font-weight:600}
+  #sourcePanel p{margin:0 0 8px;font-size:12px;line-height:1.72;color:#c8b795}
+  #sourcePanel .quote{font-family:var(--serif);font-size:13px;line-height:1.8;color:#e7d6b2}
+  #sourcePanel .ref{font-size:11px;color:#9b8a6b}
+  #sourcePanel code{font-size:11px;background:#241d16;padding:1px 4px;color:#d8c8a8}
+  #closePanel{position:absolute;top:12px;right:12px}
+  #sourcePanel ul{margin:4px 0 10px;padding-left:18px}
+  #sourcePanel li{font-size:12px;line-height:1.65;color:#c8b795;margin-bottom:4px}
+
+  /* ---------- free dialogue ---------- */
+  #freePanel{
+    position:absolute;top:10px;left:10px;z-index:8;width:min(340px,86%);
+    background:rgba(13,10,7,.96);border:1px solid #4a3a2a;padding:10px 12px;
+    display:none;box-shadow:4px 4px 0 rgba(0,0,0,.4);
+  }
+  #freePanel.open{display:block}
+  #freePanel .freeHead{
+    font-family:var(--serif);font-size:14px;letter-spacing:.12em;color:#e7d6b2;
+    display:flex;justify-content:space-between;gap:8px;align-items:baseline;
+  }
+  #freePanel .freeHead span{
+    font-family:var(--sans);font-size:10px;color:#9b8a6b;letter-spacing:.05em;
+  }
+  #freePanel .freeHint{font-size:11px;line-height:1.6;color:#8f7f62;margin:6px 0 8px}
+  #freePanel .freeRow{display:flex;gap:6px;margin-top:6px}
+  #freePanel input{
+    flex:1;min-width:0;background:#1b1510;border:1px solid #5a4a36;color:#e8dcc0;
+    padding:5px 7px;font-size:12px;font-family:var(--sans);
+  }
+  #freePanel input:focus{outline:none;border-color:var(--gold)}
+  #freePanel button{font-size:11px;padding:5px 8px}
+  #freePanel .freeRow:last-child button{flex:1}
+  #speaker.you{background:#3b4a5a}
+  @media (max-width:620px){
+    #freePanel{top:52px;width:90%}
+  }
+
+  /* ---------- end card ---------- */
+  #endCard{
+    position:absolute;inset:0;z-index:9;background:rgba(6,5,4,.985);
+    display:flex;align-items:center;justify-content:center;padding:26px;
+    opacity:0;pointer-events:none;transition:opacity 1.2s ease;
+  }
+  #endCard.show{opacity:1;pointer-events:auto}
+  #endInner{max-width:640px;width:100%;max-height:100%;overflow:auto}
+  #endInner .seal{width:44px;height:44px;font-size:24px;margin:0 auto 14px}
+  #endCard h2{margin:0 0 8px;text-align:center;font-family:var(--serif);font-weight:600;font-size:clamp(20px,3vw,30px);letter-spacing:.2em;color:#f1e4c6}
+  #endCard .lede{text-align:center;font-size:12px;line-height:1.8;color:#a8977a;margin-bottom:16px}
+  #endCard .grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;margin:12px 0 16px}
+  #endCard .grid div{font-size:11px;line-height:1.6;color:#b7a684}
+  #endCard .note{font-size:11px;line-height:1.8;color:#8f7f62;border-top:1px solid #3a2f22;padding-top:12px}
+  #endCard .actions{display:flex;gap:8px;justify-content:center;margin-top:16px}
+  @media (max-width:620px){
+    #endCard .grid{grid-template-columns:1fr}
+    body{padding:10px}
+    #hud{padding-top:18px}
+    #hint{display:none}
+  }
+
+  /* ---------- footnote ---------- */
+  #footnote{
+    margin-top:14px;display:flex;gap:18px;justify-content:space-between;align-items:flex-start;
+    font-size:11px;line-height:1.7;color:#7d6c50;
+  }
+  #footnote .right{text-align:right;white-space:nowrap}
+  #footnote b{color:#a8977a;font-weight:600}
+
+  /* static preview mode: ?still=1 — for screenshots and slide embeds */
+  html.still #titleCard{display:none}
+  html.still #hud{opacity:1;transform:none;transition:none}
+  html.still #endCard{transition:none}
+
+  @media (max-width:760px){
+    #footnote{flex-direction:column;gap:6px}
+    #footnote .right{text-align:left;white-space:normal}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="frame">
+    <canvas id="stage" width="640" height="360" aria-label="周守藏室中孔子与老子对话的像素动画"></canvas>
+    <div id="scanlines"></div>
+
+    <div id="titleCard">
+      <div class="seal">周</div>
+      <h1>守藏室</h1>
+      <div class="sub">孔子问礼 · 拟构</div>
+      <div class="tag">史料重构 · 非史实纪录</div>
+    </div>
+
+    <div id="controls">
+      <button id="btnPlay" aria-label="暂停或继续">暂停</button>
+      <button id="btnNext" aria-label="下一句">下一句</button>
+      <button id="btnSkip" aria-label="跳过开场">跳过</button>
+      <button id="btnSub" aria-pressed="true" aria-label="切换字幕与注释">字幕：开</button>
+      <button id="btnLoop" aria-pressed="false" aria-label="循环播放">循环：关</button>
+      <button id="btnFree" aria-pressed="false" aria-label="自由对话模式">自由对话</button>
+      <button id="btnSource" aria-pressed="false" aria-label="打开史料面板">史料</button>
+      <button id="btnRestart" aria-label="重播">重播</button>
+    </div>
+
+    <div id="hud">
+      <div id="speakerRow">
+        <span id="speaker">孔子</span>
+        <span id="sourceTag"></span>
+      </div>
+      <p id="classical"></p>
+      <p id="vernacular"></p>
+      <div id="hint">点击画面 / 空白键 继续</div>
+    </div>
+
+    <aside id="sourcePanel" aria-hidden="true">
+      <button id="closePanel">关闭</button>
+      <h2>史料与设定</h2>
+      <p class="small">每一句的文言引文都标明出处；没有出处的句子是教学拟构。完整材料见 week-09 的 SQLite 资料库。</p>
+
+      <h3>本句</h3>
+      <p class="quote" id="panelQuote">—</p>
+      <p class="ref" id="panelRef">—</p>
+      <p id="panelNote"></p>
+
+      <hr>
+
+      <h3>历史设定</h3>
+      <ul>
+        <li><b>地点</b>：周守藏室。《史记》说老子是「周守藏室之史」，孔子适周问礼。</li>
+        <li><b>时间</b>：拟构于孔子适周问礼，约公元前六世纪末。《史记》未明记年份，故不标具体公元。</li>
+        <li><b>年龄</b>：孔子约三十余岁；老子年岁史无明文。东汉《老子铭》称其二百余岁，属神化，不采用。</li>
+        <li><b>服饰</b>：孔子冠章甫之冠（《礼记·儒行》），玄端深衣，束大带，前垂蔽膝，佩玉；老子为周史官，玄冠深衣，束大带。衣式为像素化简化，不是出土服饰复原。「汉服」是今人对传统衣冠的统称；本片按春秋晚期深衣／玄端设计，不套用汉代以后才定型的冠服。</li>
+        <li><b>陈设</b>：竹简、木架、低案、青铜灯、席。青铜灯的形制为拟构。</li>
+      </ul>
+
+      <h3>对话来源</h3>
+      <p>文言引文取自《史记》卷63、卷47，《庄子》天道／天运／知北游，《论语》八佾／颜渊／里仁／宪问，《老子》第七十七、八章，《诗经·小雅·小旻》，《孔子家语·观周》。</p>
+      <p>大量的反问、过渡、动作与心理独白是教学拟构：目的在把两人的思想冲突演出来，不是冒充出土对话。每一句的来源都标在下方「本句」栏。</p>
+
+      <h3>文学与电影参照</h3>
+      <p>《论语》的师生问答、《庄子》的寓言对话、《诗经》的句子，共同提供语气与意象。电影《孔子》（2010，胡玫导演，周润发饰孔子；又名《孔子：决战春秋》）以「知其不可而为之」概括孔子，本片借用这种沉静而倔强的语气，不直接引用台词。</p>
+
+      <h3>资料库</h3>
+      <p>完整史料、系年异说与研究书目：<code>projects/week-09</code>。重建：<code>python code/build_db.py</code>；查询：<code>python code/query.py show P01</code>。</p>
+    </aside>
+
+    <div id="freePanel" aria-hidden="true">
+      <div class="freeHead">自由对话 <span id="freeStatus">本地即兴</span></div>
+      <p class="freeHint">AI／本地即兴生成，不是史料。输入一个词，或让两人自己说。</p>
+      <div class="freeRow">
+        <input id="freeInput" maxlength="60" placeholder="礼、仁、道、水、龙……">
+        <button id="freeAsk">问</button>
+      </div>
+      <div class="freeRow">
+        <button id="freeNext">让两人继续</button>
+        <button id="freeExit">回到剧本</button>
+      </div>
+    </div>
+
+    <div id="endCard">
+      <div id="endInner">
+        <div class="seal">终</div>
+        <h2>其犹龙邪</h2>
+        <p class="lede">孔子见老子，归而叹曰：吾今日见老子，其犹龙邪。</p>
+        <div class="grid">
+          <div>《史记》卷63〈老子韩非列传〉</div>
+          <div>《史记》卷47〈孔子世家〉</div>
+          <div>《礼记·曾子问》</div>
+          <div>《庄子》天道／天运／知北游</div>
+          <div>《论语》八佾／颜渊／里仁／宪问</div>
+          <div>《老子》第七十七、八章</div>
+          <div>《诗经·小雅·小旻》</div>
+          <div>《孔子家语》卷三〈观周〉</div>
+          <div>边韶《老子铭》；武氏祠画像石</div>
+        </div>
+        <p class="note">
+          本片为教学拟构：场景、年龄与服饰据先秦两汉材料设计；文言引文有出处，大量的反问、过渡、动作与心理独白则是创作。
+          语气参照电影《孔子》（2010）与《论语》中的孔子形象，不直接引用电影台词。完整史料库见 <code>projects/week-09</code>。
+        </p>
+        <div class="actions">
+          <button id="btnContinue">再谈一轮</button>
+          <button id="btnReplay">重播</button>
+          <button id="btnEndSource">看史料</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="footnote">
+    <div>
+      <b>周守藏室 · 孔子问礼</b>　像素动画。场景拟构自《史记》「孔子适周，将问礼于老子」；
+      室内陈设、服色与动作皆为教学再现，不是考古复原。对话为教学拟构，部分语气参照电影《孔子》（2010）。
+    </div>
+    <div class="right">
+      史料库：<b>week-09</b> · SQLite<br>
+      文言引文见每句出处
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ------------------------------------------------------------
+  // 0. Canvas setup: draw at 320x180, upscale x2 with no smoothing
+  // ------------------------------------------------------------
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d');
+  const W = 320, H = 180;
+  const buf = document.createElement('canvas');
+  buf.width = W; buf.height = H;
+  const g = buf.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  g.imageSmoothingEnabled = false;
+
+  // ------------------------------------------------------------
+  // 1. Palette
+  // ------------------------------------------------------------
+  const C = {
+    ink:'#17130f', ink2:'#241d16',
+    wall0:'#4a3a2c', wall1:'#52402f', wall2:'#5b4836', wall3:'#433326', mortar:'#382a20',
+    wood0:'#6b4a2f', wood1:'#7d5738', wood2:'#8a6440', wood3:'#553a26', wood4:'#3d2a1c',
+    floor0:'#5a4632', floor1:'#634e38', floor2:'#4e3c2b', floor3:'#6b553d',
+    mat0:'#8a7448', mat1:'#7a653d', mat2:'#9a8454',
+    bamboo0:'#c2a566', bamboo1:'#b09355', bamboo2:'#8f7440',
+    bronze0:'#7a6a3a', bronze1:'#9a8a4a', bronze2:'#5a4e2a', bronze3:'#b9a35e',
+    skin0:'#d9a066', skin1:'#c08a52', skin2:'#a87242',
+    hair0:'#1c1a18', hair1:'#2a2622',
+    white0:'#e8e0cc', white1:'#cfc6b0', white2:'#b8ae98',
+    kong0:'#33475c', kong1:'#2a3a4c', kong2:'#3e5570',
+    kongTrim:'#8f3b2e', kongTrim2:'#b04a38',
+    lao0:'#6b543a', lao1:'#5a4630', lao2:'#7d6344',
+    laoTrim:'#3a2f26', laoTrim2:'#4a3c30',
+    jade:'#6f9a6a', gold:'#d8b45a', gold2:'#f0d488',
+    flame0:'#ffe6a8', flame1:'#ffc25a', flame2:'#ff8a2a',
+    beam:'rgba(255,220,150,0.055)'
+  };
+
+  // ------------------------------------------------------------
+  // 2. Primitives
+  // ------------------------------------------------------------
+  function r(x,y,w,h,color){
+    g.fillStyle = color;
+    g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+  }
+  function hash(x,y){
+    const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+    return s - Math.floor(s);
+  }
+  function clamp(v,a,b){ return v < a ? a : v > b ? b : v; }
+  function lerp(a,b,t){ return a + (b-a)*t; }
+
+  // ------------------------------------------------------------
+  // 3. Background
+  // ------------------------------------------------------------
+  function drawWall(t){
+    // rammed-earth wall
+    for (let y=16; y<130; y+=7){
+      for (let x=0; x<W; x+=10){
+        const v = hash(x,y);
+        r(x,y,10,7, v<0.34 ? C.wall0 : v<0.68 ? C.wall1 : C.wall2);
+      }
+    }
+    for (let y=30; y<130; y+=14) r(0,y,W,1,C.mortar);
+
+    // ceiling beams
+    r(0,0,W,16,C.wood4);
+    r(0,2,W,2,C.wood3);
+    r(0,10,W,6,C.wood1);
+    r(0,15,W,1,C.wood3);
+    for (let x=0; x<W; x+=32){
+      r(x,0,3,16,C.wood3);
+      r(x+1,0,1,16,C.wood2);
+    }
+
+    // pillars
+    drawPillar(4);
+    drawPillar(304);
+
+    // window
+    drawWindow(118,18);
+
+    // shelves
+    drawShelf(20,44);
+    drawShelf(242,44);
+
+    // floor
+    for (let y=130; y<H; y+=7){
+      for (let x=0; x<W; x+=18){
+        const v = hash(x,y);
+        r(x,y,18,7, v<0.5 ? C.floor0 : C.floor1);
+      }
+    }
+    for (let x=0; x<W; x+=18) r(x,130,1,H-130,C.floor2);
+    for (let y=137; y<H; y+=7) r(0,y,W,1,C.floor2);
+
+    // mats
+    drawMat(86,122);
+    drawMat(196,122);
+
+    // stacked bamboo slips on the left
+    drawSlipStack(26,130);
+
+    // table and props
+    drawTable(158,118,t);
+  }
+
+  function drawPillar(x){
+    r(x,0,12,130,C.wood3);
+    r(x+1,0,3,130,C.wood1);
+    r(x+8,0,3,130,C.wood0);
+    r(x,0,12,2,C.wood2);
+    for (let y=6; y<130; y+=14){
+      r(x+3,y,1,8,C.wood4);
+      r(x+9,y+4,1,6,C.wood4);
+    }
+  }
+
+  function drawWindow(x,y){
+    // frame
+    r(x,y,48,32,C.wood3);
+    r(x+1,y+1,46,30,C.wood1);
+    r(x+4,y+4,40,24,'#c9a96a');
+    // lattice
+    for (let i=0; i<4; i++){
+      r(x+4+i*10,y+4,2,24,C.wood3);
+    }
+    for (let j=0; j<3; j++){
+      r(x+4,y+4+j*8,40,2,C.wood3);
+    }
+    // light edge
+    r(x+4,y+4,40,1,'#e8c98a');
+    r(x+4,y+4,1,24,'#e8c98a');
+  }
+
+  function drawShelf(x,y){
+    const w=58, h=76;
+    r(x,y,w,3,C.wood2);
+    r(x,y+h-3,w,3,C.wood2);
+    r(x,y,3,h,C.wood1);
+    r(x+w-3,y,3,h,C.wood1);
+    r(x+3,y+2,1,h-4,C.wood0);
+
+    const boards = [y+20, y+44, y+68];
+    for (const by of boards){
+      r(x+3,by,w-6,2,C.wood3);
+      for (let i=0;i<5;i++){
+        const bx=x+6+i*10;
+        // bamboo slip bundle
+        r(bx,by-17,8,17,C.bamboo1);
+        r(bx,by-17,2,17,C.bamboo0);
+        r(bx,by-17,8,1,C.bamboo2);
+        r(bx,by-11,8,1,C.wood3);
+        r(bx,by-5,8,1,C.wood3);
+        r(bx+6,by-13,1,3,C.wood4);
+      }
+    }
+  }
+
+  function drawMat(x,y){
+    r(x,y,38,10,C.mat1);
+    r(x,y,38,2,C.mat0);
+    r(x,y+8,38,2,C.mat1);
+    for (let i=0;i<38;i+=3) r(x+i,y+2,1,6,C.mat2);
+    // fringe
+    for (let i=0;i<38;i+=3) r(x+i,y+10,1,1,C.mat0);
+  }
+
+  function drawSlipStack(x,base){
+    // a pile of bamboo slip bundles, stacked on the floor
+    for (let i=0;i<4;i++){
+      const y = base - 4 - i*4;
+      const dx = (i % 2) * 2;
+      r(x+dx, y, 20, 3, C.bamboo1);
+      r(x+dx, y, 20, 1, C.bamboo0);
+      r(x+4+dx, y, 1, 3, C.wood3);
+      r(x+12+dx, y, 1, 3, C.wood3);
+      r(x+18+dx, y, 2, 3, C.bamboo2);
+    }
+    // one bundle leaning against the pile
+    r(x+23, base-16, 3, 16, C.bamboo2);
+    r(x+23, base-16, 1, 16, C.bamboo0);
+    r(x+23, base-12, 3, 1, C.wood3);
+    r(x+23, base-6, 3, 1, C.wood3);
+  }
+
+  function drawTable(x,y,t){
+    // top
+    r(x,y,36,4,C.wood2);
+    r(x,y,36,1,C.wood1);
+    r(x,y+3,36,1,C.wood3);
+    // legs
+    r(x+4,y+4,4,10,C.wood3);
+    r(x+28,y+4,4,10,C.wood3);
+    r(x+4,y+4,1,10,C.wood1);
+    r(x+28,y+4,1,10,C.wood1);
+    // bamboo slips on the table
+    r(x+4,y-4,13,4,C.bamboo1);
+    r(x+4,y-4,13,1,C.bamboo0);
+    r(x+6,y-3,1,2,C.wood3);
+    r(x+10,y-3,1,2,C.wood3);
+    r(x+14,y-3,1,2,C.wood3);
+    // bronze lamp
+    drawLamp(x+24,y,t);
+  }
+
+  function drawLamp(x,y,t){
+    r(x-4,y-3,10,3,C.bronze0);
+    r(x-4,y-3,10,1,C.bronze3);
+    r(x-1,y-8,3,5,C.bronze1);
+    r(x-5,y-11,11,3,C.bronze0);
+    r(x-5,y-11,11,1,C.bronze3);
+    // flame
+    const f = Math.sin(t*9.3) + Math.sin(t*13.7+1.2)*0.6;
+    const h = 4 + Math.round(f);
+    r(x-1,y-12-h,3,h,C.flame2);
+    r(x,y-13-h,2,h,C.flame1);
+    r(x,y-14-h,1,Math.max(2,h-2),C.flame0);
+  }
+
+  // ------------------------------------------------------------
+  // 4. Characters
+  // ------------------------------------------------------------
+  function drawHead(x, topY, who, facing, t, speaking, bob){
+    const hair = who === 'lao' ? C.white1 : C.hair0;
+    const hairDark = who === 'lao' ? C.white0 : C.hair1;
+    const y = topY + bob;
+
+    // head base
+    r(x-7, y, 14, 14, C.skin0);
+    // hair top and sides
+    r(x-7, y, 14, 4, hair);
+    r(x-7, y+4, 2, 8, hair);
+    r(x+5, y+4, 2, 8, hair);
+    // ears
+    r(x-8, y+6, 1, 3, C.skin1);
+    r(x+7, y+6, 1, 3, C.skin1);
+    // face
+    r(x-6, y+4, 12, 9, C.skin0);
+    r(x-6, y+11, 12, 2, C.skin1);
+    // brows
+    r(x-5, y+6, 4, 1, hairDark);
+    r(x+1, y+6, 4, 1, hairDark);
+    // eyes (blink)
+    const blink = ((t + (who === 'lao' ? 1.3 : 0)) % 4.2) < 0.11;
+    if (blink){
+      r(x-5, y+8, 4, 1, C.ink);
+      r(x+1, y+8, 4, 1, C.ink);
+    } else {
+      r(x-5, y+7, 2, 2, C.ink);
+      r(x+3, y+7, 2, 2, C.ink);
+    }
+    // nose (towards facing)
+    r(x + (facing > 0 ? 2 : -3), y+9, 1, 2, C.skin2);
+    // mouth
+    if (speaking){
+      const open = Math.floor(t*9) % 2;
+      r(x-2, y+11, 4, open ? 2 : 1, C.ink);
+    } else {
+      r(x-2, y+11, 4, 1, C.ink);
+    }
+    // moustache
+    r(x-4, y+10, 3, 1, hair);
+    r(x+1, y+10, 3, 1, hair);
+
+    // beard
+    if (who === 'lao'){
+      r(x-4, y+12, 8, 4, C.white0);
+      r(x-3, y+16, 6, 4, C.white1);
+      r(x-2, y+20, 4, 4, C.white1);
+      r(x-1, y+24, 2, 3, C.white0);
+    } else {
+      r(x-3, y+12, 6, 3, C.hair0);
+      r(x-2, y+15, 4, 2, C.hair0);
+    }
+
+    // cap
+    if (who === 'kong'){
+      // 章甫冠: boxy cap with a front brim
+      r(x-8, y-4, 16, 4, C.ink);
+      r(x-8, y-4, 16, 1, C.wood1);
+      r(x-6, y-6, 12, 2, C.ink);
+      r(x + (facing > 0 ? 7 : -8), y-2, 2, 2, C.ink);
+      r(x-9, y-2, 1, 1, C.gold);
+    } else {
+      // 玄冠: lower cap with side flaps
+      r(x-8, y-4, 16, 4, C.laoTrim);
+      r(x-8, y-4, 16, 1, C.wood2);
+      r(x-6, y-6, 12, 2, C.laoTrim);
+      r(x-9, y-2, 1, 5, C.laoTrim);
+      r(x+8, y-2, 1, 5, C.laoTrim);
+      r(x-1, y-6, 2, 1, C.gold);
+    }
+  }
+
+  function drawSeated(x, base, who, t, speaking, gesture, bow, facing){
+    const kong = who === 'kong';
+    const face = facing || (kong ? 1 : -1);
+    const lean = bow ? (kong ? 2 : -2) : 0;
+    const drop = bow ? 2 : 0;
+    const robe0 = kong ? C.kong0 : C.lao0;
+    const robe1 = kong ? C.kong1 : C.lao1;
+    const robe2 = kong ? C.kong2 : C.lao2;
+    const trim  = kong ? C.kongTrim : C.laoTrim;
+    const trim2 = kong ? C.kongTrim2 : C.laoTrim2;
+    const bob = Math.round(Math.sin(t*1.7 + (kong ? 0 : 1.6)) * 0.6);
+
+    // shadow
+    r(x-19, base-1, 38, 2, 'rgba(0,0,0,0.28)');
+
+    // folded legs: two knees with a central fold, so it reads as sitting
+    const lapY = base-9;
+    r(x-15, base-10, 30, 2, robe1);
+    r(x-15, lapY+1, 13, 8, robe1);
+    r(x+2,  lapY+1, 13, 8, robe1);
+    r(x-2,  lapY+2, 4, 7, robe0);
+    r(x-15, lapY+1, 13, 2, robe2);
+    r(x+2,  lapY+1, 13, 2, robe2);
+    r(x-12, lapY+2, 6, 1, robe2);
+    r(x+6,  lapY+2, 6, 1, robe2);
+    for (let i=-12; i<=12; i+=6){
+      if (i > -3 && i < 3) continue;
+      r(x+i, lapY+3, 1, 5, robe0);
+    }
+    // curved deep-robe hem
+    r(x-15, base-2, 30, 2, trim);
+    r(x-15, base-4, 4, 1, trim);
+    r(x+11, base-4, 4, 1, trim);
+
+    g.save();
+    g.translate(lean, drop);
+
+    // body
+    const bodyY = base - 30 + bob;
+    r(x-9, bodyY, 18, 21, robe0);
+    r(x-9, bodyY, 2, 21, robe1);
+    r(x+7, bodyY, 2, 21, robe2);
+    r(x, bodyY+12, 1, 8, robe1);
+
+    // cross collar, left lapel over right (交领右衽)
+    r(x-4, bodyY+1, 3, 4, C.white0);
+    r(x-1, bodyY+4, 3, 3, C.white0);
+    r(x+3, bodyY+1, 2, 4, trim);
+    r(x+1, bodyY+4, 2, 4, trim);
+    r(x-1, bodyY+8, 2, 4, trim);
+    r(x-5, bodyY+1, 2, 4, trim2);
+    r(x-3, bodyY+4, 2, 3, trim2);
+
+    // wide sash (大带), knot and hanging ends (绅)
+    r(x-9, base-17, 18, 4, trim);
+    r(x-2, base-17, 4, 4, C.gold);
+    r(x-1, base-13, 2, 6, trim);
+    r(x+1, base-13, 2, 8, trim);
+    // jade pendant on a cord
+    r(x+5, base-15, 1, 4, C.gold);
+    r(x+4, base-11, 3, 2, C.jade);
+
+    // 蔽膝: a formal knee panel for Confucius; a plain one for Laozi
+    if (kong){
+      r(x-3, base-13, 6, 9, trim);
+      r(x-3, base-13, 6, 1, C.gold);
+      r(x-4, base-4, 8, 1, trim2);
+    } else {
+      r(x-3, base-13, 6, 8, trim);
+      r(x-3, base-13, 6, 1, trim2);
+    }
+
+    // back sleeve (wide)
+    r(x-17, bodyY+2, 7, 15, robe1);
+    r(x-10, bodyY+2, 2, 4, robe1);
+    r(x-17, bodyY+14, 7, 2, trim);
+    r(x-15, bodyY+16, 3, 3, C.skin0);
+
+    // front sleeve (wide; may gesture)
+    const fx = face;
+    const gx = gesture ? fx*2 : 0;
+    const gy = gesture ? -3 : 0;
+    const ax = kong ? x+10 : x-17;
+    r(ax+gx, bodyY+2+gy, 7, 15, robe2);
+    r(ax+gx, bodyY+4+gy, 1, 11, robe1);
+    r(ax+gx, bodyY+14+gy, 7, 2, trim);
+    r(ax+2+gx, bodyY+16+gy, 3, 3, C.skin0);
+    if (kong){
+      r(x+9, bodyY+2, 1, 4, robe2);
+    } else {
+      r(x-10, bodyY+2, 1, 4, robe1);
+    }
+
+    // head
+    drawHead(x, base-44, who, face, t, speaking, bob);
+
+    // rim light from the lamp (facing side)
+    const rimX = kong ? x+10 : x-11;
+    r(rimX, bodyY+2, 1, 16, 'rgba(255,210,140,0.18)');
+
+    g.restore();
+  }
+
+  function drawStanding(x, base, who, t, walkPhase, bow, facing){
+    const kong = who === 'kong';
+    const robe0 = kong ? C.kong0 : C.lao0;
+    const robe1 = kong ? C.kong1 : C.lao1;
+    const robe2 = kong ? C.kong2 : C.lao2;
+    const trim  = kong ? C.kongTrim : C.laoTrim;
+    const trim2 = kong ? C.kongTrim2 : C.laoTrim2;
+    const face = facing || (kong ? 1 : -1);
+    const bob = Math.round(Math.sin(t*3) * 0.5);
+    const sw = Math.round(Math.sin(walkPhase) * 1.5);
+    const lean = Math.round(bow * 2);
+    const headDrop = Math.round(bow * 2);
+
+    // shadow
+    r(x-16, base-1, 32, 2, 'rgba(0,0,0,0.28)');
+
+    // legs (shown below the deep-robe skirt)
+    r(x-8+sw, base-14, 6, 14, robe1);
+    r(x+2-sw, base-14, 6, 14, robe2);
+    r(x-9+sw, base-2, 7, 2, C.ink);
+    r(x+2-sw, base-2, 7, 2, C.ink);
+
+    // deep-robe skirt (深衣下裳), swaying with the walk
+    r(x-11+sw, base-20, 22, 14, robe0);
+    r(x-11+sw, base-20, 3, 14, robe1);
+    r(x+8+sw, base-20, 3, 14, robe2);
+    r(x+sw, base-19, 1, 12, robe1);
+    r(x-11+sw, base-7, 22, 2, trim);
+    r(x-11+sw, base-9, 3, 1, trim);
+    r(x+8+sw, base-9, 3, 1, trim);
+
+    // body
+    const bodyY = base - 36 + bob + headDrop;
+    r(x-9+lean, bodyY, 18, 24, robe0);
+    r(x-9+lean, bodyY, 2, 24, robe1);
+    r(x+7+lean, bodyY, 2, 24, robe2);
+    r(x+lean, bodyY+13, 1, 9, robe1);
+
+    // cross collar, left lapel over right (交领右衽)
+    r(x-4+lean, bodyY+1, 3, 4, C.white0);
+    r(x-1+lean, bodyY+4, 3, 3, C.white0);
+    r(x+3+lean, bodyY+1, 2, 4, trim);
+    r(x+1+lean, bodyY+4, 2, 4, trim);
+    r(x-1+lean, bodyY+8, 2, 4, trim);
+    r(x-5+lean, bodyY+1, 2, 4, trim2);
+    r(x-3+lean, bodyY+4, 2, 3, trim2);
+
+    // wide sash (大带), knot, hanging ends (绅), jade
+    r(x-9+lean, bodyY+16, 18, 4, trim);
+    r(x-2+lean, bodyY+16, 4, 4, C.gold);
+    r(x-1+lean, bodyY+20, 2, 7, trim);
+    r(x+1+lean, bodyY+20, 2, 9, trim);
+    r(x+5+lean, bodyY+18, 1, 4, C.gold);
+    r(x+4+lean, bodyY+22, 3, 2, C.jade);
+
+    // 蔽膝
+    if (kong){
+      r(x-3+lean, bodyY+18, 6, 12, trim);
+      r(x-3+lean, bodyY+18, 6, 1, C.gold);
+      r(x-4+lean, bodyY+29, 8, 1, trim2);
+    } else {
+      r(x-3+lean, bodyY+18, 6, 10, trim);
+      r(x-3+lean, bodyY+18, 6, 1, trim2);
+    }
+
+    // back sleeve (wide, flared)
+    r(x-18+lean, bodyY+4-sw, 8, 18, robe1);
+    r(x-10+lean, bodyY+3, 2, 4, robe1);
+    r(x-19+lean, bodyY+20-sw, 9, 3, trim);
+    r(x-15+lean, bodyY+23-sw, 3, 3, C.skin0);
+
+    // front sleeve (wide, flared)
+    r(x+10+lean, bodyY+4+sw, 8, 18, robe2);
+    r(x+8+lean, bodyY+3, 2, 4, robe2);
+    r(x+9+lean, bodyY+20+sw, 9, 3, trim);
+    r(x+13+lean, bodyY+23+sw, 3, 3, C.skin0);
+
+    // head
+    drawHead(x+lean, bodyY-14, who, face, t, false, 0);
+
+    // rim light from the lamp (facing side)
+    const rimX = kong ? x+11+lean : x-12+lean;
+    r(rimX, bodyY+2, 1, 20, 'rgba(255,210,140,0.18)');
+  }
+
+  // 5. Atmosphere
+  // ------------------------------------------------------------
+  const dust = [];
+  for (let i=0; i<34; i++){
+    dust.push({
+      x: 110 + hash(i,1)*100,
+      y: 40 + hash(i,2)*90,
+      s: 1 + hash(i,3)*3,
+      p: hash(i,4)*6.28
+    });
+  }
+
+  function drawBeam(t){
+    g.fillStyle = C.beam;
+    g.beginPath();
+    g.moveTo(122,50);
+    g.lineTo(162,50);
+    g.lineTo(190,130);
+    g.lineTo(108,130);
+    g.closePath();
+    g.fill();
+
+    // a second, narrower shaft
+    g.fillStyle = 'rgba(255,225,170,0.045)';
+    g.beginPath();
+    g.moveTo(132,50);
+    g.lineTo(148,50);
+    g.lineTo(170,130);
+    g.lineTo(140,130);
+    g.closePath();
+    g.fill();
+  }
+
+  function drawDust(t){
+    for (const d of dust){
+      const y = ((d.y - t*d.s*2) % 100 + 100) % 100 + 36;
+      const x = d.x + Math.sin(t*0.7 + d.p) * 2;
+      g.fillStyle = 'rgba(255,228,170,' + (0.12 + 0.16*Math.abs(Math.sin(t*0.8+d.p))) + ')';
+      g.fillRect(Math.round(x), Math.round(y), 1, 1);
+    }
+  }
+
+  function drawDragon(t, amount){
+    if (amount <= 0.01) return;
+    const a0 = t * 0.9;
+    g.globalAlpha = clamp(amount,0,1) * 0.9;
+    for (let i=0; i<22; i++){
+      const a = a0 + i * Math.PI*2/22;
+      const rx = 30 + Math.sin(t*1.1 + i*0.7)*7;
+      const ry = 13 + Math.cos(t*1.4 + i*0.5)*4;
+      const x = 215 + Math.cos(a)*rx;
+      const y = 96 + Math.sin(a)*ry;
+      g.fillStyle = i%3 === 0 ? C.gold2 : C.gold;
+      g.fillRect(Math.round(x), Math.round(y), i%4 === 0 ? 2 : 1, 1);
+    }
+    g.globalAlpha = 1;
+  }
+
+  function drawLighting(){
+    // lamp glow in world space
+    const lx = 182, ly = 104;
+    const grad = g.createRadialGradient(lx,ly,2,lx,ly,70);
+    grad.addColorStop(0,'rgba(255,190,100,0.20)');
+    grad.addColorStop(0.35,'rgba(255,160,70,0.08)');
+    grad.addColorStop(1,'rgba(255,140,50,0)');
+    g.fillStyle = grad;
+    g.fillRect(0,0,W,H);
+  }
+
+  function drawVignette(){
+    const grad = g.createRadialGradient(W/2,H/2,48,W/2,H/2,190);
+    grad.addColorStop(0,'rgba(0,0,0,0)');
+    grad.addColorStop(0.7,'rgba(0,0,0,0.18)');
+    grad.addColorStop(1,'rgba(0,0,0,0.62)');
+    g.fillStyle = grad;
+    g.fillRect(0,0,W,H);
+  }
+
+  // ------------------------------------------------------------
+  // 6. Dialogue data
+  // ------------------------------------------------------------
+const LINES = [
+    {who:'孔子', cls:'丘，鲁人也。闻夫子博古知今，通礼乐之原，明道德之归，愿受教。', ven:'（他把湿了的衣角往身后掖了掖。）', src:'《孔子家语·观周》（拟构开场）', note:'《家语》原文是孔子对南宫敬叔说的话，这里移作当面求教。', refs:['P13'], shot:'two', act:'bow'},
+    {who:'老子', cls:'子来乎。坐。', ven:'（老子指了指案边的席子。）', src:'拟构（「子来乎」借自《庄子·天运》）', note:'问候与动作无史料可考，为场景需要而拟。', refs:[], shot:'right'},
+    {who:'孔子', cls:'路上不好走。车轴断了一回，耽搁了两天。', ven:'（案上的铜灯爆了个灯花。）', src:'拟构', note:'日常寒暄，用来写旅途的疲惫。', refs:[], shot:'left'},
+    {who:'老子', cls:'从鲁国来？', ven:'', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'从鲁国来。过泰山时下了雨，衣裳现在还没干透。', ven:'（他低头看了看自己的袖子。）', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'先把湿衣裳烤烤。案上有水，自己倒。', ven:'（他把铜灯往孔子那边推了推。）', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'谢先生。', ven:'（他接过陶碗，先暖了暖手。）', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'车上还带着那么多简？', ven:'', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'带了几卷。路上闲，翻一翻。', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'路上闲？我看你一路上没少给人讲礼吧。', ven:'（他笑了一下，胡子跟着动了动。）', src:'拟构', note:'老子的打趣，让两人先像人一样说话。', refs:[], shot:'right'},
+    {who:'孔子', cls:'讲了几回。有人听，有人赶我走。', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'赶你走的人，后来呢？', ven:'', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'后来……后来我就走了。', ven:'（他摊了摊手。）', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'你倒想得开。', ven:'', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'想不开也得走。总不能赖在人家门口。', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'你这话，倒像一句礼。', ven:'（他给孔子添了点水。）', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'先生这里真安静。', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'安静。灰尘也大。你坐的那张席，早上刚掸过。', ven:'', src:'拟构', note:'', refs:[], shot:'two'},
+    {who:'孔子', cls:'先生一个人守着这些简，不闷吗？', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'闷。所以你来，我高兴。', ven:'（他把手拢进袖子里。）', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'那丘问一句不该问的——先生今年高寿？', ven:'', src:'拟构', note:'年龄问题故意问不实；老子不答，避免把东汉「二百余岁」当事实。', refs:[], shot:'two'},
+    {who:'老子', cls:'老得记不清了。', ven:'（他低头吹了吹灯芯。）', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'先生不说，丘也不问。', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'你问礼，还是问我？', ven:'', src:'拟构', note:'一句话把寒暄收回正题。', refs:[], shot:'right'},
+    {who:'孔子', cls:'问礼。', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'那就说礼。', ven:'', src:'拟构', note:'', refs:[], shot:'two'},
+
+    {who:'老子', cls:'礼，是给活人用的，还是给死人用的？', ven:'', src:'拟构', note:'让老子用反问逼孔子说明：礼到底为谁而设。', refs:[], shot:'right'},
+    {who:'孔子', cls:'给活人，也给后来的人。', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'子所言者，其人与骨皆已朽矣，独其言在耳。', ven:'你所说的那些，制定它的人连骨头都朽了，只剩下话还在。', src:'《史记》卷63〈老子韩非列传〉', note:'原文。', refs:['P01'], shot:'right'},
+    {who:'孔子', cls:'骨头朽了，话还在。', ven:'', src:'拟构', note:'承接老子语，写孔子的执着。', refs:[], shot:'left'},
+    {who:'老子', cls:'话还在。可听话的人，换了一代又一代。', ven:'', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'所以丘想找一句，能穿过一代又一代的话。', ven:'', src:'拟构', note:'这句话是本片对孔子「述而不作」的解释。', refs:[], shot:'left'},
+    {who:'老子', cls:'君子得其时则驾，不得其时则蓬累而行。良贾深藏若虚，君子盛德，容貌若愚。去子之骄气与多欲，态色与淫志——是皆无益于子之身。', ven:'君子遇到时机就驾车出仕，遇不到就蓬头垢面地行走。好商人把货藏得好像没有，君子德行盛大而容貌像个愚人。去掉你的骄气与多欲、做作的神色与过大的志向——这些对你自身都没有好处。', src:'《史记》卷63〈老子韩非列传〉', note:'原文，语序略作调整。', refs:['P01'], shot:'right', act:'gesture'},
+    {who:'孔子', cls:'先生这话，丘在路上也对自己说过。可说完，还是得赶路。', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'赶路可以。别把赶路当成到家。', ven:'', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'那先生到了吗？', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'到了。所以我不赶了。', ven:'', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'丘还没到。丘还得赶。', ven:'', src:'拟构', note:'', refs:[], shot:'two'},
+
+    {who:'孔子', cls:'丘闻之：克己复礼为仁。一日克己复礼，天下归仁焉。', ven:'我听说：约束自己、使言行归于礼，就是仁。一旦这样做，天下都会归向仁。', src:'《论语·颜渊》', note:'原文。此处由孔子引述，不是对话原文。', refs:[], shot:'left'},
+    {who:'老子', cls:'克己。克的是谁的己？', ven:'', src:'拟构', note:'把「克己」拆开来问，是老子式的追问。', refs:[], shot:'right'},
+    {who:'孔子', cls:'丘的己。克完了，剩一个能爱人的人。', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'爱人，不累吗？', ven:'', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'累。可总得有人爱。', ven:'（他说完，自己先笑了一下。）', src:'拟构', note:'语气参照电影《孔子》中孔子「知其不可而为之」的承担。', refs:[], shot:'left'},
+    {who:'老子', cls:'喝水。说了这么多，嘴不干？', ven:'（他把陶碗又推过去。）', src:'拟构', note:'生活化的停顿，让辩论不至于太紧。', refs:[], shot:'two'},
+    {who:'孔子', cls:'干。可先生的话，比水还解渴。', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'少来这套。', ven:'（他摆了摆手，嘴角却带着笑。）', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'老子', cls:'天之道，损有余而补不足；人之道则不然，损不足以奉有余。', ven:'天之道，减损有余的来补不足的；人之道却相反，减损不足的来奉养有余的。', src:'《老子》第七十七章', note:'原文。', refs:[], shot:'two'},
+    {who:'孔子', cls:'所以丘要讲仁、讲礼，让人道不至于如此。', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'你拿人的规矩去量天，量得完吗？', ven:'', src:'拟构', note:'', refs:[], shot:'right', act:'gesture'},
+    {who:'孔子', cls:'量不完。可总得有个规矩，人才不至于相食。', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'规矩能救人，也能杀人。', ven:'', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'所以丘才要一句好规矩。', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+
+    {who:'老子', cls:'上善若水。水善利万物而不争，处众人之所恶，故几于道。', ven:'最高的善像水。水善于利益万物而不争，停留在众人厌恶的低处，所以接近道。', src:'《老子》第八章', note:'原文。', refs:[], shot:'two'},
+    {who:'孔子', cls:'水往低处流，人往高处走。', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'人往高处走，所以摔得重。', ven:'', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'那也不能不走。', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'走可以。别把「仁」举在头上，像击鼓而求亡子。', ven:'走可以。别把「仁」举在头上，像敲着鼓去追逃犯。', src:'《庄子·天道》改写', note:'原文作「若击鼓而求亡子焉」，此处口语化。', refs:['P07'], shot:'two'},
+    {who:'孔子', cls:'先生是说，丘的仁，是鼓声？', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'鼓声能叫人，也能吓人。', ven:'', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'那先生的道呢？道能叫人吗？', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'道不可献，不可进，不可告，不可与。中无主而不止，外无正而不行。名，公器也，不可多取；仁义，先王之蘧庐也，止可以一宿，而不可久处。', ven:'道不能献给别人，不能进奉，不能告诉，不能给予。心中没有主宰就留不住，外面没有印证就行不通。名是公器，不可多取；仁义是先王的临时旅舍，只能住一晚，不可久居。', src:'《庄子·天运》', note:'原文，节录。', refs:['P08'], shot:'right', act:'gesture'},
+    {who:'孔子', cls:'不可献，不可告——那先生为何还著书？', ven:'', src:'拟构', note:'老子著书五千言事见《史记》，在出关时；此处移作对话，属拟构。', refs:[], shot:'left'},
+    {who:'老子', cls:'因为有人要问。', ven:'', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'问了，就能得吗？', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'问，是你的事；得，是道的事。', ven:'', src:'拟构', note:'', refs:[], shot:'right'},
+
+    {who:'孔子', cls:'夫子之道，其犹龙乎？', ven:'', src:'拟构，本《史记》「其犹龙邪」', note:'《史记》原文是孔子离开后对弟子语；这里移作当面感叹。', refs:['P01'], shot:'two', effect:'dragon'},
+    {who:'老子', cls:'龙不在天上。龙在你刚才问的那句话里。', ven:'', src:'拟构', note:'把「龙」从天上拉回对话，是本片的解释。', refs:[], shot:'right'},
+    {who:'孔子', cls:'丘知其不可而为之。', ven:'我知道做不到，还是要去做。', src:'《论语·宪问》', note:'原作他人对孔子的评语，此处移作自道；电影《孔子》也以「知其不可而为之」概括其精神。', refs:[], shot:'left'},
+    {who:'老子', cls:'知道不可，还要为？', ven:'', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'若人人都不为，天下就真的不可了。', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'天快黑了。你今晚住哪儿？', ven:'（窗外的光已经暗下去。）', src:'拟构', note:'生活化的收束，让两人从辩论回到日常。', refs:[], shot:'two'},
+    {who:'孔子', cls:'城外有间客舍。', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'住我这儿吧。简多，地方小，挤一挤。', ven:'', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'不打扰先生？', ven:'', src:'拟构', note:'', refs:[], shot:'left'},
+    {who:'老子', cls:'打扰。可我喜欢。', ven:'（他把案上的简往旁边挪了挪。）', src:'拟构', note:'', refs:[], shot:'right'},
+    {who:'孔子', cls:'那丘就厚着脸皮住下。', ven:'（他笑了，眼角的纹路挤在一起。）', src:'拟构', note:'', refs:[], shot:'two'},
+    {who:'老子', cls:'吾闻富贵者送人以财，仁者送人以言。吾不能富贵，窃仁者之号，送子以言：聪明深察而近于死者，好议人者也；博辩广大而危其身者，发人之恶者也。为人子者毋以有己，为人臣者毋以有己。', ven:'我听说富贵者送人财物，仁者送人言语。我不能富贵，只好借仁者之名送你几句话：聪明深察而接近死亡的人，是好议论别人的人；博辩广大而危及自身的人，是揭发别人短处的人。做儿子不要只顾自己，做臣子不要只顾自己。', src:'《史记》卷47〈孔子世家〉；《孔子家语·观周》', note:'原文，两本略有异文。', refs:['P02','P13'], shot:'two'},
+    {who:'孔子', cls:'丘敬奉教。战战兢兢，如临深渊，如履薄冰。', ven:'我恭敬地接受教诲。战战兢兢，好像站在深渊边，好像踩在薄冰上。', src:'《孔子家语·观周》；《诗经·小雅·小旻》', note:'「敬奉教」为《家语》原文；「战战兢兢」四句引《诗经》，亦见《家语·观周》。', refs:['P13'], shot:'two', act:'bow'},
+    {who:'旁白', cls:'鸟，吾知其能飞；鱼，吾知其能游；兽，吾知其能走。走者可以为罔，游者可以为纶，飞者可以为矰。至于龙，吾不能知其乘风云而上天。吾今日见老子，其犹龙邪！', ven:'鸟，我知道它能飞；鱼，我知道它能游；兽，我知道它能跑。跑的可以用网，游的可以用线，飞的可以用箭。至于龙，我不知道它怎样乘风云上天。我今天见老子，他大概就像龙吧！', src:'《史记》卷63〈老子韩非列传〉', note:'原文。这是孔子离开后对弟子说的话，作结尾旁白。', refs:['P01'], shot:'wide', effect:'dragon'}
+  ];
+
+  // ------------------------------------------------------------
+  // 7. State
+  // ------------------------------------------------------------
+  // Free-dialogue pool. These are teaching improvisations, not sources.
+  const FREE = [
+    {theme:'礼', tags:['礼','规矩','简'], kong:{cls:'先生，礼若只写在简上，还算礼吗？', ven:'礼如果只写在竹简上，还能算礼吗？'}, lao:{cls:'简上的礼，是给人看的；人身上的礼，才是给人活的。', ven:'写在简上的礼是给人看的；活在身上的礼才是给人用的。'}},
+    {theme:'仁', tags:['仁','爱','心'], kong:{cls:'丘讲仁，是怕人心凉了。', ven:'我讲仁，是怕人心变冷。'}, lao:{cls:'心凉了，靠仁焐得热吗？不如先别让它凉。', ven:'心冷了，靠仁能焐热吗？不如一开始就别让它冷。'}},
+    {theme:'道', tags:['道','路','走'], kong:{cls:'道若无人走，还是道吗？', ven:'道如果没有人走，还能叫道吗？'}, lao:{cls:'道不等人走。人走了，才叫路。', ven:'道不等人。人走出来的，才叫路。'}},
+    {theme:'水', tags:['水','低','高'], kong:{cls:'水往低处流，人往高处走。', ven:'水往低处流，人往高处走。'}, lao:{cls:'人往高处走，别把水忘了。', ven:'人往高处走，别忘了水。'}},
+    {theme:'龙', tags:['龙','飞'], kong:{cls:'先生真像龙。', ven:'先生真像龙。'}, lao:{cls:'龙会飞，我不会。我只是坐得久。', ven:'龙会飞，我不会。我只是坐得久。'}},
+    {theme:'日常', tags:['水','茶','凉'], kong:{cls:'这水有点凉了。', ven:'这水有点凉了。'}, lao:{cls:'凉水照得见人，热水照不见。', ven:'凉水能照见人，热水照不见。'}},
+    {theme:'天下', tags:['天下','政治','做事'], kong:{cls:'天下无道，丘想出来做点事。', ven:'天下无道，我想出来做点事。'}, lao:{cls:'想做就做，别把天下背在背上。', ven:'想做就做，别把天下背在背上。'}},
+    {theme:'弟子', tags:['弟子','学生','三千'], kong:{cls:'丘有弟子三千，贤者七十二。', ven:'我有三千弟子，贤能的七十二人。'}, lao:{cls:'三千人里，有多少人记得住你？', ven:'三千人里，有多少人记得住你？'}},
+    {theme:'诗乐', tags:['诗','音乐','韶'], kong:{cls:'丘在齐闻韶，三月不知肉味。', ven:'我在齐国听韶乐，三个月尝不出肉味。'}, lao:{cls:'肉味忘了，韶味还在吗？', ven:'肉味忘了，韶乐的味道还在吗？'}},
+    {theme:'死', tags:['死','活'], kong:{cls:'先生怕死吗？', ven:'先生怕死吗？'}, lao:{cls:'怕。可我怕的是没活明白，不是死。', ven:'怕。可我怕的是没活明白，不是死。'}},
+    {theme:'名', tags:['名','名声'], kong:{cls:'君子疾没世而名不称焉。', ven:'君子担心死后名声不被人称道。'}, lao:{cls:'名是公器。借来用用，别当成自己的。', ven:'名是公器。借来用用，别当成自己的。'}},
+    {theme:'学', tags:['学','学而'], kong:{cls:'学而时习之，不亦说乎。', ven:'学了又时常温习，不也快乐吗？'}, lao:{cls:'学得越多，越知道自己不知道。', ven:'学得越多，越知道自己不知道。'}},
+    {theme:'政', tags:['政','为政','北辰'], kong:{cls:'为政以德，譬如北辰。', ven:'用德行治理国家，就像北极星。'}, lao:{cls:'北辰不动，众星自转。你动得太多。', ven:'北极星不动，众星自己转。你动得太多。'}},
+    {theme:'朋友', tags:['朋友','远方'], kong:{cls:'有朋自远方来，不亦乐乎。', ven:'有朋友从远方来，不也快乐吗？'}, lao:{cls:'我就是那个远方的朋友。', ven:'我就是那个远方的朋友。'}},
+    {theme:'留宿', tags:['留宿','住','天黑'], kong:{cls:'天晚了，丘该走了。', ven:'天晚了，我该走了。'}, lao:{cls:'住下吧。明天再走。', ven:'住下吧。明天再走。'}},
+    {theme:'雨', tags:['雨','泰山','路'], kong:{cls:'泰山那场雨，下得真大。', ven:'泰山那场雨，下得真大。'}, lao:{cls:'雨大，路就难走；路难走，人才会停。', ven:'雨大，路就难走；路难走，人才会停。'}},
+    {theme:'年龄', tags:['年龄','高寿','老'], kong:{cls:'先生真的记不清自己多大？', ven:'先生真的记不清自己多大？'}, lao:{cls:'记那么清做什么？记得住今天就够了。', ven:'记那么清做什么？记得住今天就够了。'}},
+    {theme:'助葬', tags:['助葬','巷党','丧礼'], kong:{cls:'先生助葬于巷党，为什么先止哭？', ven:'先生在巷党助葬，为什么先让人停止哭声？'}, lao:{cls:'哭声太响，听不见天变。', ven:'哭声太响，听不见天变。'}},
+    {theme:'仁义', tags:['仁义','禽兽'], kong:{cls:'没有仁义，人跟禽兽有什么分别？', ven:'没有仁义，人和禽兽有什么区别？'}, lao:{cls:'分别不在仁义，在你会不会问这句话。', ven:'区别不在仁义，在你会不会问这句话。'}},
+    {theme:'教', tags:['教','道','指'], kong:{cls:'道可以教吗？', ven:'道可以教吗？'}, lao:{cls:'可以指。不能替人走。', ven:'可以指。不能替人走。'}}
+  ];
+
+
+  const SHOTS = {
+    wide:  {x:160, y:92,  z:1.00},
+    two:   {x:160, y:96,  z:1.15},
+    left:  {x:95,  y:100, z:1.55},
+    right: {x:225, y:100, z:1.55},
+    ending:{x:160, y:90,  z:1.06}
+  };
+
+  // Where each character stands/sits. Movement cues below refer to these.
+  const cast = {
+    kong: {x:105, pose:'seated', facing:1,  walk:0},
+    lao:  {x:215, pose:'seated', facing:-1, walk:0}
+  };
+
+  // Scripted movement beats: line index -> moves.
+  // who: 'kong' | 'lao'; to: world x; dur: seconds; after: 'seated' | 'standing'
+  const MOVES = {
+    17: [{who:'lao',  to:150, dur:2.0, after:'standing'}],
+    20: [{who:'lao',  to:215, dur:2.0, after:'seated'}],
+    25: [{who:'kong', to:130, dur:1.6, after:'standing'},
+         {who:'lao',  to:210, dur:1.6, after:'standing'}],
+    37: [{who:'kong', to:105, dur:1.6, after:'seated'},
+         {who:'lao',  to:215, dur:1.6, after:'seated'}],
+    43: [{who:'lao',  to:150, dur:1.2, after:'standing'}],
+    46: [{who:'lao',  to:215, dur:1.2, after:'seated'}],
+    52: [{who:'lao',  to:145, dur:1.6, after:'standing'}],
+    56: [{who:'lao',  to:215, dur:1.6, after:'seated'}],
+    65: [{who:'kong', to:140, dur:1.4, after:'standing'}],
+    70: [{who:'lao',  to:200, dur:1.4, after:'standing'}],
+    76: [{who:'kong', to:105, dur:1.6, after:'seated'},
+         {who:'lao',  to:215, dur:1.6, after:'seated'}],
+    78: [{who:'kong', to:-20, dur:2.6, after:'standing', face:-1}]
+  };
+
+  const state = {
+    t: 0,
+    playing: true,
+    mode: 'intro',        // intro | dialogue | ending
+    introT: 0,
+    line: 0,
+    char: 0,
+    wait: 0,
+    lastN: -1,
+    subtitle: true,
+    sourceOpen: false,
+    cam: {x:160, y:92, z:1},
+    camT: {x:160, y:92, z:1},
+    dragon: 0,
+    fade: 1,
+    fadingOut: false,
+    endT: 0,
+    endShown: false,
+    moves: [],
+    loop: false,
+    free: false,
+    freeQueue: [],
+    freeHistory: [],
+    freeLast: null,
+    freeApi: false,
+    freeApiTried: false,
+    freeBusy: false,
+    freeReq: 0,
+    scriptLine: 0
+  };
+
+  // ------------------------------------------------------------
+  // 8. UI
+  // ------------------------------------------------------------
+  const $ = (id) => document.getElementById(id);
+  const el = {
+    title: $('titleCard'),
+    hud: $('hud'),
+    speaker: $('speaker'),
+    sourceTag: $('sourceTag'),
+    classical: $('classical'),
+    vernacular: $('vernacular'),
+    hint: $('hint'),
+    panel: $('sourcePanel'),
+    panelQuote: $('panelQuote'),
+    panelRef: $('panelRef'),
+    panelNote: $('panelNote'),
+    endCard: $('endCard'),
+    btnPlay: $('btnPlay'),
+    btnNext: $('btnNext'),
+    btnSkip: $('btnSkip'),
+    btnSub: $('btnSub'),
+    btnLoop: $('btnLoop'),
+    btnFree: $('btnFree'),
+    freePanel: $('freePanel'),
+    freeInput: $('freeInput'),
+    freeAsk: $('freeAsk'),
+    freeNext: $('freeNext'),
+    freeExit: $('freeExit'),
+    freeStatus: $('freeStatus'),
+    btnSource: $('btnSource'),
+    btnRestart: $('btnRestart'),
+    btnReplay: $('btnReplay'),
+    btnContinue: $('btnContinue'),
+    btnEndSource: $('btnEndSource'),
+    closePanel: $('closePanel')
+  };
+
+  function activeLines(){
+    return state.free ? state.freeQueue : LINES;
+  }
+
+  function currentLine(){
+    const arr = activeLines();
+    return arr[state.line] || arr[arr.length - 1] || LINES[0];
+  }
+
+  function updatePanel(){
+    const L = currentLine();
+    if (state.mode === 'intro'){
+      el.panelQuote.textContent = '开场：孔子适周，走进周守藏室。';
+      el.panelRef.textContent = '《史记》卷47〈孔子世家〉：「适周问礼，盖见老子云。」';
+      el.panelNote.textContent = '「盖」「云」是司马迁的存疑笔法：他知道有这个传说，但不完全确定。';
+      return;
+    }
+    el.panelQuote.textContent = L.cls;
+    el.panelRef.textContent = L.src + (L.refs && L.refs.length ? '　·　资料库：' + L.refs.join('、') : '');
+    el.panelNote.textContent = L.note || '';
+  }
+
+  function setLine(i){
+    state.line = i;
+    state.char = 0;
+    state.wait = 0;
+    state.lastN = -1;
+    const L = currentLine();
+    state.camT = SHOTS[L.shot] || SHOTS.two;
+
+    // start scripted moves for this line (script mode only)
+    state.moves = [];
+    const cues = state.free ? [] : (MOVES[i] || []);
+    for (const m of cues){
+      const c = cast[m.who];
+      if (m.face) c.facing = m.face;
+      c.pose = 'walking';
+      state.moves.push({...m, fromX: c.x, t: 0});
+    }
+
+    el.speaker.textContent = L.who;
+    el.speaker.className = L.who === '老子' ? 'lao' : L.who === '旁白' ? 'narrator' : L.who === '你' ? 'you' : '';
+    el.sourceTag.textContent = L.src;
+    el.classical.textContent = '';
+    el.vernacular.textContent = L.ven;
+    el.vernacular.hidden = !state.subtitle;
+
+    if (L.effect === 'dragon') state.dragon = 1;
+    updatePanel();
+
+    // static preview: no camera glide, no typewriter
+    if (document.documentElement.classList.contains('still')){
+      state.cam = {x: state.camT.x, y: state.camT.y, z: state.camT.z};
+      state.char = Array.from(L.cls).length;
+      for (const m of state.moves){
+        cast[m.who].x = m.to;
+        cast[m.who].pose = m.after;
+        cast[m.who].walk = 0;
+      }
+      state.moves = [];
+    }
+
+    // restart the HUD fade for each speaker change
+    el.hud.classList.remove('show');
+    void el.hud.offsetWidth;
+    el.hud.classList.add('show');
+  }
+
+  function nextLine(){
+    if (state.mode === 'intro'){
+      skipIntro();
+      return;
+    }
+    if (state.mode === 'ending') return;
+    if (state.free && state.freeBusy) return;
+
+    const L = currentLine();
+    const chars = Array.from(L.cls);
+    if (Math.floor(state.char) < chars.length){
+      state.char = chars.length;
+      state.wait = 0;
+      return;
+    }
+    const arr = activeLines();
+    if (state.line >= arr.length - 1){
+      if (state.free){
+        generateFreeExchange('');
+        return;
+      }
+      startEnding();
+      return;
+    }
+    setLine(state.line + 1);
+  }
+
+  function skipIntro(fadeIn){
+    if (state.mode !== 'intro') return;
+    state.mode = 'dialogue';
+    state.introT = 0;
+    state.fade = fadeIn ? 1 : 0;
+    state.fadingOut = false;
+    state.moves = [];
+    cast.kong.x = 105; cast.kong.pose = 'seated'; cast.kong.facing = 1;
+    cast.lao.x = 215;  cast.lao.pose = 'seated';  cast.lao.facing = -1;
+    el.title.classList.add('hide');
+    el.hud.classList.add('show');
+    setLine(0);
+  }
+
+  function startEnding(){
+    if (state.mode === 'ending') return;
+    state.mode = 'ending';
+    state.endT = 0;
+    state.endShown = false;
+    state.moves = [];
+    state.camT = SHOTS.ending;
+    el.hud.classList.remove('show');
+  }
+
+  function showEndCard(){
+    if (state.endShown) return;
+    state.endShown = true;
+    el.endCard.classList.add('show');
+  }
+
+  function restartDialogue(){
+    state.mode = 'dialogue';
+    state.playing = true;
+    state.line = 0;
+    state.char = 0;
+    state.wait = 0;
+    state.lastN = -1;
+    state.dragon = 0;
+    state.fade = 1;
+    state.endT = 0;
+    state.endShown = false;
+    state.moves = [];
+    state.free = false;
+    state.freeQueue = [];
+    state.freeHistory = [];
+    state.freeLast = null;
+    state.freeBusy = false;
+    cast.kong = {x:105, pose:'seated', facing:1, walk:0};
+    cast.lao  = {x:215, pose:'seated', facing:-1, walk:0};
+    el.endCard.classList.remove('show');
+    el.freePanel.classList.remove('open');
+    el.btnFree.textContent = '自由对话';
+    el.btnFree.setAttribute('aria-pressed','false');
+    el.hud.classList.add('show');
+    el.btnPlay.textContent = '暂停';
+    setLine(0);
+  }
+
+  function setFreeStatus(text){
+    el.freeStatus.textContent = text;
+  }
+
+  function pickFree(keyword){
+    const q = (keyword || '').trim();
+    let pool = FREE;
+    if (q){
+      pool = FREE.filter(e =>
+        e.tags.some(t => q.includes(t) || t.includes(q)) ||
+        (e.theme && (q.includes(e.theme) || e.theme.includes(q)))
+      );
+    }
+    if (!pool.length) pool = FREE;
+    let ex = pool[Math.floor(Math.random()*pool.length)];
+    if (ex === state.freeLast && pool.length > 1){
+      ex = pool[(pool.indexOf(ex)+1) % pool.length];
+    }
+    state.freeLast = ex;
+    return ex;
+  }
+
+  function appendFreeLines(kongText, laoText, theme, question, source){
+    const start = state.freeQueue.length;
+    const cleanQ = (question || '').trim();
+    if (cleanQ){
+      state.freeQueue.push({who:'你', cls:cleanQ, ven:'', src:'你的提问', note:'', refs:[], shot:'two'});
+      state.freeHistory.push({who:'你', cls:cleanQ});
+    }
+    const note = '自由对话：以人物思想为线索的即兴，不是史料。';
+    const src = (source || '即兴') + (theme ? ' · ' + theme : '');
+    state.freeQueue.push({who:'孔子', cls:kongText, ven:'', src, note, refs:[], shot:'left', act:'gesture'});
+    state.freeQueue.push({who:'老子', cls:laoText, ven:'', src, note, refs:[], shot:'right', act:'gesture'});
+    state.freeHistory.push({who:'孔子', cls:kongText}, {who:'老子', cls:laoText});
+    if (state.freeHistory.length > 16) state.freeHistory = state.freeHistory.slice(-16);
+    setLine(start);
+  }
+
+  function localFreeExchange(question){
+    const ex = pickFree(question);
+    appendFreeLines(ex.kong.cls, ex.lao.cls, ex.theme, question, '本地即兴');
+  }
+
+  async function generateFreeExchange(question, force){
+    if (!state.free || (state.freeBusy && !force)) return;
+    const req = state.freeReq;
+    state.freeBusy = true;
+    setFreeStatus('正在想……');
+    el.freeNext.disabled = true;
+    el.freeAsk.disabled = true;
+    let timer = null;
+    try {
+      if (state.freeApi){
+        const controller = new AbortController();
+        timer = setTimeout(() => controller.abort(), 12000);
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          signal: controller.signal,
+          body: JSON.stringify({
+            history: state.freeHistory.slice(-10),
+            question: (question || '').trim()
+          })
+        });
+        clearTimeout(timer);
+        timer = null;
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (!state.free || req !== state.freeReq) return;
+        if (!data || !data.kong || !data.lao) throw new Error('bad JSON');
+        appendFreeLines(data.kong, data.lao, data.topic || '即兴', question, 'AI 即兴');
+        setFreeStatus('AI 即兴');
+        state.freeBusy = false;
+        el.freeNext.disabled = false;
+        el.freeAsk.disabled = false;
+        return;
+      }
+    } catch (e) {
+      if (timer) clearTimeout(timer);
+      if (req !== state.freeReq) return;
+      state.freeApi = false;
+      state.freeApiTried = true;
+      setFreeStatus('本地即兴（API 不可用）');
+    }
+    localFreeExchange(question);
+    state.freeBusy = false;
+    el.freeNext.disabled = false;
+    el.freeAsk.disabled = false;
+    setFreeStatus(state.freeApi ? 'AI 即兴' : (state.freeApiTried ? '本地即兴（未连接 API）' : '本地即兴'));
+  }
+
+  function startFree(){
+    if (state.free) return;
+    state.scriptLine = state.mode === 'dialogue' ? state.line : 0;
+    state.free = true;
+    state.freeQueue = [{who:'旁白', cls:'（自由对话：正在起头……）', ven:'', src:'自由对话', note:'', refs:[], shot:'two'}];
+    state.freeHistory = [];
+    state.freeLast = null;
+    state.freeBusy = true;
+    state.freeReq++;
+    state.freeApiTried = false;
+    state.mode = 'dialogue';
+    state.fade = 0;
+    state.moves = [];
+    state.line = 0;
+    state.char = 0;
+    state.wait = 0;
+    state.playing = true;
+    cast.kong = {x:105, pose:'seated', facing:1, walk:0};
+    cast.lao  = {x:215, pose:'seated', facing:-1, walk:0};
+    el.title.classList.add('hide');
+    el.title.style.display = 'none';
+    el.endCard.classList.remove('show');
+    el.hud.classList.add('show');
+    el.freePanel.classList.add('open');
+    el.freePanel.setAttribute('aria-hidden','false');
+    el.freeInput.value = '';
+    el.freeNext.disabled = false;
+    el.freeAsk.disabled = false;
+    el.btnFree.textContent = '回到剧本';
+    el.btnFree.setAttribute('aria-pressed','true');
+    el.btnPlay.textContent = '暂停';
+    setLine(0);
+    setFreeStatus('正在连接……');
+    fetch('/api/health')
+      .then(r => r.ok ? r.json() : Promise.reject(new Error('no api')))
+      .then(d => {
+        state.freeApi = !!(d && d.ok);
+        state.freeApiTried = true;
+        setFreeStatus(state.freeApi ? 'AI 即兴' : '本地即兴');
+        generateFreeExchange('', true);
+      })
+      .catch(() => {
+        state.freeApi = false;
+        state.freeApiTried = true;
+        setFreeStatus('本地即兴（未连接 API）');
+        generateFreeExchange('', true);
+      });
+  }
+
+  function exitFree(){
+    if (!state.free) return;
+    state.free = false;
+    state.freeQueue = [];
+    state.freeHistory = [];
+    state.freeLast = null;
+    state.freeBusy = false;
+    state.freeReq++;
+    state.mode = 'dialogue';
+    state.fade = 0;
+    state.moves = [];
+    el.freeNext.disabled = false;
+    el.freeAsk.disabled = false;
+    cast.kong = {x:105, pose:'seated', facing:1, walk:0};
+    cast.lao  = {x:215, pose:'seated', facing:-1, walk:0};
+    el.freePanel.classList.remove('open');
+    el.freePanel.setAttribute('aria-hidden','true');
+    el.btnFree.textContent = '自由对话';
+    el.btnFree.setAttribute('aria-pressed','false');
+    setFreeStatus('本地即兴');
+    setLine(Math.min(state.scriptLine || 0, LINES.length - 1));
+  }
+
+  function toggleFree(){
+    state.free ? exitFree() : startFree();
+  }
+
+  function restart(){
+    state.t = 0;
+    state.playing = true;
+    state.mode = 'intro';
+    state.introT = 0;
+    state.line = 0;
+    state.char = 0;
+    state.wait = 0;
+    state.lastN = -1;
+    state.cam = {x:160, y:92, z:1};
+    state.camT = {x:160, y:92, z:1};
+    state.dragon = 0;
+    state.fade = 1;
+    state.fadingOut = false;
+    state.endT = 0;
+    state.endShown = false;
+    state.sourceOpen = false;
+    state.moves = [];
+    state.free = false;
+    state.freeQueue = [];
+    state.freeHistory = [];
+    state.freeLast = null;
+    state.freeBusy = false;
+    state.scriptLine = 0;
+    cast.kong = {x:105, pose:'seated', facing:1, walk:0};
+    cast.lao  = {x:215, pose:'seated', facing:-1, walk:0};
+
+    el.endCard.classList.remove('show');
+    el.freePanel.classList.remove('open');
+    el.panel.classList.remove('open');
+    el.hud.classList.remove('show');
+    el.title.classList.remove('hide');
+    el.title.style.display = '';
+    el.btnPlay.textContent = '暂停';
+    el.btnFree.textContent = '自由对话';
+    el.btnFree.setAttribute('aria-pressed','false');
+    el.btnSource.setAttribute('aria-pressed','false');
+    el.panel.setAttribute('aria-hidden','true');
+    updatePanel();
+  }
+
+  function togglePlay(){
+    state.playing = !state.playing;
+    el.btnPlay.textContent = state.playing ? '暂停' : '继续';
+  }
+
+  function toggleSubtitle(){
+    state.subtitle = !state.subtitle;
+    el.vernacular.hidden = !state.subtitle;
+    el.btnSub.textContent = '字幕：' + (state.subtitle ? '开' : '关');
+    el.btnSub.setAttribute('aria-pressed', String(state.subtitle));
+  }
+
+  function toggleLoop(){
+    state.loop = !state.loop;
+    el.btnLoop.textContent = '循环：' + (state.loop ? '开' : '关');
+    el.btnLoop.setAttribute('aria-pressed', String(state.loop));
+  }
+
+  function togglePanel(force){
+    const open = typeof force === 'boolean' ? force : !state.sourceOpen;
+    state.sourceOpen = open;
+    el.panel.classList.toggle('open', open);
+    el.panel.setAttribute('aria-hidden', String(!open));
+    el.btnSource.setAttribute('aria-pressed', String(open));
+    if (open) updatePanel();
+  }
+
+  // ------------------------------------------------------------
+  // 9. Intro timeline
+  // ------------------------------------------------------------
+  function kongziIntro(){
+    const t = state.introT;
+    const walkStart = 0.8, walkEnd = 3.6;
+    if (t < walkStart) return {x:-22, walk:0, bow:0};
+    if (t < walkEnd){
+      const p = (t - walkStart) / (walkEnd - walkStart);
+      return {x:-22 + 122 * p, walk: t * 9, bow:0};
+    }
+    return {x:100, walk:0, bow: clamp((t - walkEnd) / 0.6, 0, 1)};
+  }
+
+  // ------------------------------------------------------------
+  // 10. Scene composition
+  // ------------------------------------------------------------
+  function drawScene(){
+    drawWall(state.t);
+    drawBeam(state.t);
+
+    if (state.mode === 'intro'){
+      drawSeated(215, 130, 'lao', state.t, false, false);
+      const k = kongziIntro();
+      drawStanding(k.x, 130, 'kong', state.t, k.walk, k.bow);
+    } else {
+      const L = currentLine();
+      const kongSpeak = L.who === '孔子';
+      const laoSpeak = L.who === '老子';
+      const gesture = L.act === 'gesture';
+      const bow = L.act === 'bow';
+
+      drawCharacter('lao', laoSpeak, gesture && laoSpeak, bow && laoSpeak);
+      drawCharacter('kong', kongSpeak, gesture && kongSpeak, bow && kongSpeak);
+    }
+
+    drawDust(state.t);
+
+    if (state.dragon > 0.01){
+      drawDragon(state.t, state.dragon);
+      state.dragon = Math.max(0, state.dragon - 0.006);
+    }
+  }
+
+  function drawCharacter(who, speaking, gesture, bow){
+    const c = cast[who];
+    if (c.pose === 'seated'){
+      drawSeated(c.x, 130, who, state.t, speaking, gesture, bow, c.facing);
+    } else {
+      drawStanding(c.x, 130, who, state.t, c.walk, bow, c.facing);
+    }
+  }
+
+  function updateMoves(dt){
+    if (!state.moves.length) return;
+    for (const m of state.moves){
+      m.t += dt;
+      const p = clamp(m.t / m.dur, 0, 1);
+      const e = p < 0.5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2) / 2;
+      const c = cast[m.who];
+      c.x = lerp(m.fromX, m.to, e);
+      c.walk += dt * 10;
+      if (p >= 1){ c.x = m.to; c.pose = m.after; c.walk = 0; }
+    }
+    state.moves = state.moves.filter(m => m.t < m.dur);
+  }
+
+  // ------------------------------------------------------------
+  // 11. Render loop
+  // ------------------------------------------------------------
+  let last = performance.now();
+
+  function frame(now){
+    let dt = (now - last) / 1000;
+    last = now;
+    dt = Math.min(dt, 0.05);
+    if (!state.playing) dt = 0;
+
+    update(dt);
+    render();
+    requestAnimationFrame(frame);
+  }
+
+  function update(dt){
+    if (dt <= 0) return;
+    state.t += dt;
+    updateMoves(dt);
+
+    // camera smoothing
+    const k = 1 - Math.pow(0.0015, dt);
+    state.cam.x = lerp(state.cam.x, state.camT.x, k);
+    state.cam.y = lerp(state.cam.y, state.camT.y, k);
+    state.cam.z = lerp(state.cam.z, state.camT.z, k);
+
+    if (state.mode === 'intro'){
+      state.introT += dt;
+      if (state.introT < 1.2){
+        state.fade = clamp(1 - state.introT / 0.8, 0, 1);
+      } else {
+        state.fade = 0;
+      }
+      if (state.introT > 1.1){
+        el.title.classList.add('hide');
+      }
+      if (state.introT > 4.3){
+        state.fade = clamp((state.introT - 4.3) / 0.6, 0, 1);
+      }
+      if (state.introT > 5.0){
+        skipIntro(true);
+      }
+      return;
+    }
+
+    if (state.mode === 'dialogue'){
+      const L = currentLine();
+      const chars = Array.from(L.cls);
+      if (state.char < chars.length){
+        state.char += dt * 26;
+        if (state.char > chars.length) state.char = chars.length;
+      } else if (state.moves.length){
+        // let them finish walking before the next line
+        state.wait = 0;
+      } else {
+        state.wait += dt;
+        const hold = L.hold || 2.4 + chars.length * 0.018;
+        if (state.wait > hold) nextLine();
+      }
+      // fade in after skip
+      if (state.fade > 0) state.fade = Math.max(0, state.fade - dt * 2);
+      return;
+    }
+
+    if (state.mode === 'ending'){
+      state.endT += dt;
+      state.fade = clamp(state.endT / 1.8, 0, 1);
+      if (state.endT > 1.8) showEndCard();
+      if (state.loop && state.endT > 8) restartDialogue();
+      return;
+    }
+  }
+
+  function render(){
+    // ---- draw world to the 320x180 buffer ----
+    g.setTransform(1,0,0,1,0,0);
+    g.clearRect(0,0,W,H);
+    g.fillStyle = '#0b0907';
+    g.fillRect(0,0,W,H);
+
+    // snap camera zoom to 0.05 steps; round translation for crisp pixels
+    const z = Math.round(state.cam.z * 20) / 20;
+    const tx = Math.round(W/2 - state.cam.x * z);
+    const ty = Math.round(H/2 - state.cam.y * z);
+    g.setTransform(z, 0, 0, z, tx, ty);
+
+    drawScene();
+    drawLighting();
+    g.setTransform(1,0,0,1,0,0);
+    drawVignette();
+
+    // fade
+    if (state.fade > 0.001){
+      g.fillStyle = 'rgba(0,0,0,' + clamp(state.fade,0,1) + ')';
+      g.fillRect(0,0,W,H);
+    }
+
+    // ---- upscale to canvas ----
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(buf, 0,0,W,H, 0,0,canvas.width,canvas.height);
+  }
+
+  // ------------------------------------------------------------
+  // 12. Dialogue text rendering (typewriter)
+  // ------------------------------------------------------------
+  function renderText(){
+    if (state.mode !== 'dialogue') return;
+    const L = currentLine();
+    const chars = Array.from(L.cls);
+    const n = Math.floor(state.char);
+    if (n !== state.lastN){
+      state.lastN = n;
+      el.classical.textContent = chars.slice(0, n).join('');
+    }
+    const done = n >= chars.length;
+    el.hint.style.opacity = done ? '1' : '0.15';
+  }
+
+  // text update runs every frame, independent of canvas
+  (function textLoop(){
+    renderText();
+    requestAnimationFrame(textLoop);
+  })();
+
+  // ------------------------------------------------------------
+  // 13. Events
+  // ------------------------------------------------------------
+  el.btnPlay.addEventListener('click', togglePlay);
+  el.btnNext.addEventListener('click', nextLine);
+  el.btnSkip.addEventListener('click', () => skipIntro());
+  el.btnSub.addEventListener('click', toggleSubtitle);
+  el.btnLoop.addEventListener('click', toggleLoop);
+  el.btnFree.addEventListener('click', toggleFree);
+  el.freeNext.addEventListener('click', () => generateFreeExchange(''));
+  el.freeAsk.addEventListener('click', () => {
+    const q = el.freeInput.value.trim();
+    if (q) generateFreeExchange(q);
+    else el.freeInput.focus();
+  });
+  el.freeInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter'){
+      e.preventDefault();
+      e.stopPropagation();
+      el.freeAsk.click();
+    }
+  });
+  el.freeExit.addEventListener('click', exitFree);
+  el.btnSource.addEventListener('click', () => togglePanel());
+  el.btnRestart.addEventListener('click', restart);
+  el.btnReplay.addEventListener('click', restart);
+  el.btnContinue.addEventListener('click', restartDialogue);
+  el.btnEndSource.addEventListener('click', () => {
+    el.endCard.classList.remove('show');
+    togglePanel(true);
+  });
+  el.closePanel.addEventListener('click', () => togglePanel(false));
+
+  el.title.addEventListener('click', () => skipIntro());
+
+  window.addEventListener('keydown', (e) => {
+    if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight'){
+      e.preventDefault();
+      nextLine();
+    } else if (e.key === 'p' || e.key === 'P'){
+      togglePlay();
+    } else if (e.key === 'r' || e.key === 'R'){
+      restart();
+    } else if (e.key === 's' || e.key === 'S'){
+      toggleSubtitle();
+    } else if (e.key === 'l' || e.key === 'L'){
+      toggleLoop();
+    } else if (e.key === 'f' || e.key === 'F'){
+      toggleFree();
+    } else if (e.key === 'h' || e.key === 'H'){
+      togglePanel();
+    } else if (e.key === 'Escape'){
+      togglePanel(false);
+    }
+  });
+
+  // click on the frame (but not controls/panel) advances
+  document.getElementById('frame').addEventListener('click', (e) => {
+    if (e.target.closest('button')) return;
+    if (e.target.closest('#sourcePanel')) return;
+    if (e.target.closest('#freePanel')) return;
+    if (e.target.closest('#endCard')) return;
+    nextLine();
+  }, true);
+
+  // ------------------------------------------------------------
+  // 14. Boot
+  // ------------------------------------------------------------
+  updatePanel();
+  setLine(0);
+  el.hud.classList.remove('show');
+
+  // Preview shortcut: ?skip=1 jumps straight to the dialogue; ?skip=1&line=5
+  // jumps to a later line. Useful for screenshots and for embedding in slides.
+  const params = new URLSearchParams(location.search);
+  if (params.get('still') === '1'){
+    document.documentElement.classList.add('still');
+  }
+  if (params.get('skip') === '1'){
+    skipIntro();
+    const n = parseInt(params.get('line') || '0', 10);
+    if (n > 0 && n < LINES.length) setLine(n);
+  }
+  if (params.get('free') === '1'){
+    startFree();
+  }
+  if (params.get('end') === '1'){
+    state.mode = 'ending';
+    state.endT = 2;
+    state.fade = 1;
+    state.cam = {x: SHOTS.ending.x, y: SHOTS.ending.y, z: SHOTS.ending.z};
+    el.hud.classList.remove('show');
+    el.title.classList.add('hide');
+    showEndCard();
+  }
+
+  // Small debug hook for rehearsals and tests; harmless in normal viewing.
+  window.__scene = {state, cast, MOVES, LINES, tick: (dt) => update(dt)};
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
