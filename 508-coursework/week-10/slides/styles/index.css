@@ -1,0 +1,584 @@
+@import "./opencode.css";
+@import "./strip.css";
+/* Deck stylesheet for the exhibit theme.
+   Part A: ONE layout model for every slide body (default layout; cover and section layouts untouched).
+   Part B: components (frames, images, tables, panels, small text classes).
+   The theme's fit (reslides theme-exhibit, utils/page.tsx) does the sizing:
+   - a <div class="body"> is scaled to the free space (grows up to 1.35, shrinks to 0.75) and centred;
+   - other content under the title is zoomed as a group (grows to 1.3, shrinks to 0.72).
+   This sheet decides WHERE content sits and what fills; it does not force sizes that would
+   hide content from the theme's fit. */
+
+/* =========================================================================
+   PART A · THE CONTENT BOX
+   ========================================================================= */
+
+/* 1. The box: everything in .main below the h1 (and below an optional <p class="sub">).
+      Content never leaves it. If it is still too tall after the theme's fit has reached
+      its minimum, the box scrolls (thin, faint scrollbar on the right); the title stays put.
+      The shot tool still flags such slides (OVERFLOW). */
+.dh:not(.cover, .section) .main {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(17, 17, 17, .18) transparent;
+}
+/* The title's top spacing is padding, so when the box scrolls the pinned title keeps its place.
+   The 32 px gap below it is a MARGIN, outside the title's box: it is the safe area where frame
+   labels (half above their frame's top border) and panel bars at the top of the box overhang.
+   The title never covers them. */
+.dh:not(.cover, .section) .main > h1 {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  flex: none;
+  background: var(--dh-paper);
+  margin: 0 0 32px;
+  padding: 34px 0 0;
+}
+.dh:not(.cover, .section) .main > h1:has(+ .sub) { margin-bottom: 0; }
+.dh:not(.cover, .section) .main > h1 + .sub { flex: none; margin: 14px 0 32px; }
+
+/* 2. Default placement: the content is centred in the box (auto margins on the first and
+      last content element). Long content has no free space, so it simply fills the box.
+      A .body is centred by the theme's fit itself (translateY), so it gets no auto margins. */
+.dh:not(.cover, .section) .main > h1 + :not(.sub, .body),
+.dh:not(.cover, .section) .main > h1 + .sub + :not(.body) { margin-top: auto; }
+.dh:not(.cover, .section) .main > :last-child:not(h1, .sub, .body) { margin-bottom: auto; }
+.dh:not(.cover, .section) .main > .body { margin-top: 0; }
+/* content elements span the box width (the theme's .frame.fit would shrink to its label) */
+.dh:not(.cover, .section) .main > :not(h1, .sub) { align-self: stretch; min-width: 0; }
+
+/* 3. What fills the box instead: anything holding an image (image frames, bodies and grids
+      with pictures, a bare <Figure>). Bodies with pictures are then left alone by the fit. */
+.dh:not(.cover, .section) .main > :is(.frame, .body, .grid):has(.pic, .rs-figure, img, iframe, video, .embed-frame),
+.dh:not(.cover, .section) .main > .rs-figure {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+}
+
+/* 4. Per-slide overrides. In the slide's frontmatter:  class: align-top
+      (or align-bottom, justify-left, justify-center, justify-right; combine with a space),
+      or the same class on the content element itself, e.g. <div class="body align-top">.
+      A .body placed by an override keeps its natural size (the fit still shrinks it if long). */
+.dh:is(.align-top, :has(> .main > .align-top)) .main > h1 + :not(.sub),
+.dh:is(.align-top, :has(> .main > .align-top)) .main > h1 + .sub + * { margin-top: 0; }
+.dh:is(.align-bottom, :has(> .main > .align-bottom)) .main > :last-child:not(h1, .sub) { margin-bottom: 0; }
+.dh:is(.align-top, .align-bottom, :has(> .main > :is(.align-top, .align-bottom))) .main > .body:not(:has(.pic, .rs-figure, img, iframe, video, .embed-frame)) {
+  flex: 0 1 auto !important;
+}
+.dh:is(.align-bottom, :has(> .main > .align-bottom)) .main > .body:not(:has(.pic, .rs-figure, img, iframe, video, .embed-frame)) { margin-top: auto; }
+.dh:is(.justify-left, :has(> .main > .justify-left)) .main > :not(h1, .sub) { align-self: flex-start; }
+.dh:is(.justify-center, :has(> .main > .justify-center)) .main > :not(h1, .sub) { align-self: center; }
+.dh:is(.justify-right, :has(> .main > .justify-right)) .main > :not(h1, .sub) { align-self: flex-end; }
+
+/* 5. Inside the box. Side-by-side bodies: children share the width and the height of the
+      tallest (text at the top). Grids: every card as tall as the tallest. Stacked bodies:
+      children full width; panels and text frames as tall as their content, an image frame
+      takes the height left over. */
+.dh .body > .frame,
+.dh .grid > .frame { align-self: stretch !important; }
+.dh .body:not(.col) > .frame { flex: 1 1 0%; }
+/* Text frames side by side (a .body of text frames): together about 85% of the box width,
+   equal shares (2:1 with .wide), at least 240 px tall, body-size text, the group centred. */
+.dh .main > .body:not(.col):not(:has(.pic, .rs-figure, img, iframe, video, .embed-frame, .term, .file, .browser, .tree, .rows, .route)):not(:has(> .frame:only-child)) { width: 85%; align-self: center !important; justify-content: center; }
+.dh .main > .body:not(.col):not(:has(.pic, .rs-figure, img, iframe, video, .embed-frame, .term, .file, .browser, .tree, .rows, .route)) > .frame { min-height: 240px; }
+.dh .grid { grid-auto-rows: 1fr; }
+.dh .body.col > * { align-self: stretch !important; width: 100% !important; min-width: 0; }
+.dh .body.col > :is(.term, .file, .browser),
+.dh .body.col > .frame:not(:has(.pic, .rs-figure, img, iframe, video, .embed-frame)) { flex: 0 0 auto !important; }
+.dh .body.col > .frame:has(.pic, .rs-figure, img, iframe, video, .embed-frame) { flex: 1 1 0% !important; min-height: 160px !important; }
+/* panel next to a frame: panel ~60%, frame ~40% */
+.dh .body:not(.col) > :is(.term, .file, .browser) { flex: 3 1 0% !important; }
+.dh .body:not(.col):has(> :is(.term, .file, .browser)) > .frame { flex: 2 1 0% !important; }
+/* <div class="frame wide"> (text or image frame): about 2/3 beside a 1/3 neighbour */
+.dh .body:not(.col):has(> .frame.wide) > .frame.wide { flex: 2 1 0% !important; }
+.dh .body:not(.col):has(> .frame.wide) > :not(.wide) { flex: 1 1 0% !important; }
+
+/* =========================================================================
+   PART B · COMPONENTS
+   ========================================================================= */
+
+/* Hide the right-hand figure credit label (credits live in figures.yaml) */
+.dh .rs-credit { display: none !important; }
+
+/* Frames: content height, text at the top, theme padding */
+.dh .frame {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  min-height: 0 !important;
+  padding: 40px 38px 34px !important;
+}
+.dh .frame > ul,
+.dh .frame > ol { margin: 0 !important; }
+/* Frame text is body text: the same face, size and colour as a slide-level list (P-POINTS,
+   theme .main > ul: 36 px DM Sans), and frame lists use the same red square bullet and the
+   same small hanging indent. ONE body-text size deck-wide. */
+.dh .main .frame .text { font: 400 36px/1.5 var(--dh-sans); color: var(--dh-body); }
+.dh .main .frame :is(.text, .frame) ul,
+.dh .main .frame > ul { list-style: none; margin: 0; padding-left: 0; display: block; }
+.dh .main .frame :is(.text, .frame) ul > li,
+.dh .main .frame > ul > li { position: relative; padding-left: 1.1em; margin: 0 0 12px; }
+.dh .main .frame :is(.text, .frame) ul > li::before,
+.dh .main .frame > ul > li::before { content: ""; position: absolute; left: 0; top: .62em; width: 12px; height: 12px; background: var(--dh-accent); }
+.dh .main .frame :is(.text, .frame) ol,
+.dh .main .frame > ol { margin: 0; padding-left: 1.3em; }
+.dh .main .frame :is(.text, .frame) ol > li,
+.dh .main .frame > ol > li { margin: 0 0 12px; padding-left: .3em; }
+.dh .main .frame :is(.text, .frame) ol > li::marker { font-family: var(--dh-mono); font-size: .7em; color: var(--dh-subtle); }
+.dh .main .frame li:last-child { margin-bottom: 0; }
+/* rows text is body text too */
+.dh .rows .plain { font: 400 36px/1.45 var(--dh-sans); color: var(--dh-body); }
+.dh .main .frame .text p { margin: 0 0 12px; }
+.dh .main .frame .text > :last-child { margin-bottom: 0; }
+
+/* Tables. Plain tables under a title keep the theme style (mono heads, sans cells); their
+   size comes from the fit (short tables grow, cells 30 -> 39 px). Dense tables (9+ body
+   rows) get tighter rows so the fit has to shrink them less. Tables inside a frame get the
+   same style (they used to inherit the frame's serif text), and short cells never wrap. */
+.dh .main > table:has(> tbody > tr:nth-child(9)) td { padding-top: 8px; padding-bottom: 8px; }
+.dh .main > table:has(> tbody > tr:nth-child(9)) th { padding-bottom: 10px; }
+.dh .frame .text table { border-collapse: collapse; margin: 0; font: 400 30px/1.35 var(--dh-sans); color: var(--dh-body); }
+.dh .frame .text table th { font: 400 18px/1.3 var(--dh-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--dh-subtle); text-align: left; padding: 0 34px 12px 0; white-space: nowrap; }
+.dh .frame .text table td { padding: 12px 34px 12px 0; vertical-align: top; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dh .frame .text table :is(th, td):last-child { padding-right: 0; }
+
+/* <Figure> (.rs-figure): fills the space it is given; never cropped */
+.dh .rs-figure {
+  width: 100% !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  margin: 0 !important;
+}
+.dh .rs-figure img {
+  width: 100% !important;
+  height: 100% !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  border: 1.5px solid var(--dh-frame);
+  display: block !important;
+}
+.dh .doc-scan .rs-figure img {
+  background: #faf8f5 !important;
+  padding: 8px !important;
+}
+.dh .rs-figure figcaption {
+  flex: none !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+  margin-top: 12px !important;
+  font: 500 21px/1.25 var(--dh-sans) !important;
+  color: var(--dh-subtle) !important;
+}
+
+/* Images in a frame (.frame .pic): always the whole image, inside the frame. .pic takes the
+   frame's remaining height; the image is laid over it and contained (never cropped, centred). */
+.dh .frame .pic,
+.dh .frame.fit .pic {
+  position: relative;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+.dh .frame .pic img {
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  margin: 0 !important;
+}
+/* <Figure> inside a frame looks like a bare image there: no border, no caption line */
+.dh .frame .pic .rs-figure { position: static !important; display: block !important; margin: 0 !important; }
+.dh .frame .pic .rs-figure img { border: 0 !important; padding: 0 !important; background: none !important; }
+.dh .frame .rs-figure figcaption { display: none !important; }
+.dh .frame .pic .rs-withheld { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+
+/* Embedded page in a frame */
+.dh .frame.embed-frame { padding: 24px 18px 14px !important; flex: 1; min-height: 0; }
+.dh .frame.embed-frame iframe { width: 100%; flex: 1; min-height: 540px; border: 0; background: #ffffff; }
+
+/* ------------------------------------------------------------------------
+   Simulated interfaces (BRIEF.md: P-TERM, P-FILE, P-BROWSER)
+   Exhibit style: hard 1px borders, square corners, no shadows, mono, >= 24px.
+   As tall as their content; next to a frame in a .body they take ~60%.
+   ------------------------------------------------------------------------ */
+.dh .term,
+.dh .file,
+.dh .browser {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-height: 0;
+  min-width: 0;
+  border: 1px solid var(--dh-ink);
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+  font: 400 24px/1.55 var(--dh-mono);
+}
+.dh .term-bar,
+.dh .file-bar,
+.dh .browser-bar {
+  flex: none !important;
+  height: auto !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 12px 24px;
+  font: 400 24px/1.3 var(--dh-mono);
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+/* Bar labels never lose words: when the panel is narrow the second label wraps below. */
+.dh :is(.term-bar, .browser-bar) > span { white-space: nowrap; }
+.dh .browser-bar > .url { white-space: normal; overflow-wrap: anywhere; }
+.dh .term pre,
+.dh .file pre,
+.dh .browser pre {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  /* The JSX pipeline keeps the newline right after <pre> (HTML would drop it), so the
+     first line of a panel is always empty: it serves as the top padding. */
+  padding: 2px 28px 22px;
+  font: inherit;
+  color: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow: hidden;
+}
+.dh .term pre code,
+.dh .file pre code,
+.dh .browser pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+
+/* Terminal: dark panel, grey bar */
+.dh .term { background: #18181b; color: #e4e4e7; border-color: #111111; }
+.dh .term-bar { color: #a1a1aa; border-bottom: 1px solid #3f3f46; }
+
+/* File view: paper panel, ink text, grey mono bar */
+.dh .file { background: var(--dh-paper); color: var(--dh-ink); }
+.dh .file-bar { color: var(--dh-subtle); background: #f5f5f4; border-bottom: 1px solid var(--dh-ink); justify-content: flex-start; }
+
+/* Browser: paper panel, address field in the bar; body holds <pre> (JSON) or plain markdown/HTML */
+.dh .browser { background: var(--dh-paper); color: var(--dh-ink); }
+.dh .browser-bar { background: #f5f5f4; border-bottom: 1px solid var(--dh-ink); color: var(--dh-subtle); }
+.dh .browser-bar .url { flex: 1 1 auto; min-width: 0; padding: 6px 14px; background: var(--dh-paper); border: 1px solid var(--dh-faint); color: var(--dh-body); }
+.dh .browser-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden;
+}
+.dh .browser-body > :not(pre) { margin-left: 28px; margin-right: 28px; }
+.dh .browser-body > :not(pre):first-child { margin-top: 22px; }
+.dh .browser-body :is(p, li) { font: 400 24px/1.5 var(--dh-sans); color: var(--dh-body); }
+.dh .browser-body > p { margin-top: 0; margin-bottom: 14px; }
+.dh .browser-body :is(h2, h3) { font: 600 28px/1.3 var(--dh-sans); margin: 0 0 10px; }
+
+/* Inline spans (inside <pre> or plain body text) */
+.dh :is(.term, .file, .browser) .you { font-weight: 700; }
+.dh :is(.term, .file, .browser) .del { text-decoration: line-through; text-decoration-thickness: 2px; }
+.dh :is(.term, .file, .browser) .hl {
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--dh-accent);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 5px;
+}
+/* dark (terminal) */
+.dh .term .you { color: #fafafa; }
+.dh .term .tool { color: #60a5fa; }
+.dh .term :is(.ok, .add) { color: #4ade80; }
+.dh .term .dim { color: #a1a1aa; }
+.dh .term .del { color: #f87171; }
+.dh .term .hl { color: #ffffff; background: rgba(227, 31, 39, .28); }
+/* light (file, browser) */
+.dh :is(.file, .browser) .you { color: var(--dh-ink); }
+.dh :is(.file, .browser) .tool { color: #1d4ed8; }
+.dh :is(.file, .browser) :is(.ok, .add) { color: #15803d; }
+.dh :is(.file, .browser) .dim { color: var(--dh-subtle); }
+.dh :is(.file, .browser) .del { color: #b91c1c; }
+.dh :is(.file, .browser) .hl { color: var(--dh-ink); background: rgba(227, 31, 39, .10); }
+
+/* ------------------------------------------------------------------------
+   Small text classes used in BRIEF
+   ------------------------------------------------------------------------ */
+/* The one red accent: <span class="mark">…</span>, same look as the theme's <mark>. */
+.dh .mark { background: none; color: var(--dh-accent); padding: 0; }
+/* A grey one-line statement under a title: <p class="sub">…</p> (body-text size). */
+.dh .sub, .dh .main > p.sub { font: 400 36px/1.5 var(--dh-sans); color: var(--dh-subtle); max-width: 1560px; text-wrap: pretty; }
+
+/* .rows labels readable from the back of the room: 25 px mono (theme: 17 px), tighter
+   tracking so CJK labels ([据], SEARCH: 流变) are not spaced apart. Uppercase only changes
+   Latin letters. Colours (grey, red for .hot) and the label|text baseline stay the theme's. */
+.dh .rows .row > .label { font-size: 25px; line-height: 1.3; letter-spacing: .05em; }
+.dh .rows.xsmall .row > .label, .dh .rows.small .row > .label { font-size: 24px; }
+
+/* Bar charts (.bars) inside a frame. The theme grid (auto | 1fr | 76px) let long names take
+   the whole width of a narrow frame, so the bars were 0 px wide. In a frame: names wrap in
+   their own column, the bar track always keeps room, values are as wide as their text and
+   readable. Bar length = the inline width %; red for .b.red, grey otherwise. */
+.dh .frame .bars { grid-template-columns: minmax(0, 1.3fr) minmax(90px, 1fr) max-content; column-gap: 20px; row-gap: 20px; }
+.dh .frame .bars .n { font: 400 30px/1.2 var(--dh-serif); min-width: 0; overflow-wrap: anywhere; }
+.dh .frame .bars .b { height: 22px; min-width: 3px; background: #9ca3af; }
+.dh .frame .bars .b.red { background: var(--dh-accent); }
+.dh .frame .bars .v { font: 400 24px/1 var(--dh-mono); color: var(--dh-subtle); white-space: nowrap; }
+
+/* =========================================================================
+   Size limits on the theme's up-zoom. The theme grows plain content with an inline
+   zoom of exactly 1.3, 1.2 or 1.1 (shrinking uses values below 1, which stay untouched).
+   ========================================================================= */
+/* NO up-scaling (Bo): body text has one size deck-wide; short content stays at its normal
+   size, centred, instead of growing. Long content still shrinks (zoom < 1 / scale < 1). */
+.dh:not(.cover, .section) .main > :is([style*="zoom: 1.3"], [style*="zoom: 1.2"], [style*="zoom: 1.1"]) { zoom: 1 !important; }
+.dh:not(.cover, .section) .main > .body:not(:has(.pic, .rs-figure, img, iframe, video, .embed-frame)) { flex: 0 1 auto !important; margin-top: auto; margin-bottom: auto; }
+
+/* Per-slide  class: compact  (frontmatter): never grow (max 1.0; long content still shrinks),
+   and slightly smaller text and tables. Same table style. */
+.dh.compact .main > :is([style*="zoom: 1.3"], [style*="zoom: 1.2"], [style*="zoom: 1.1"]) { zoom: 1 !important; }
+.dh.compact .main > .body:not(:has(.pic, .rs-figure, img, iframe, video, .embed-frame)) { flex: 0 1 auto !important; margin-top: auto; margin-bottom: auto; }
+.dh.compact .main > :is(p, ul, ol):not(.sub) { font-size: 32px; }
+.dh.compact .main .frame .text { font-size: 32px; }
+.dh.compact :is(.main > table, .frame .text table) { font-size: 26px; }
+.dh.compact :is(.main > table, .frame .text table) th { font-size: 16px; }
+.dh.compact :is(.main > table, .frame .text table) td { padding-top: 10px; padding-bottom: 10px; }
+
+/* =========================================================================
+   Sensible defaults for frames, routes and two-column bodies (no per-slide fixes)
+   - Text inside a frame is left-aligned, captions included.
+   - Side by side, frames share the width equally (or 2:1 with .wide) and are never
+     narrower than 360 px; a pair shares the height of the taller one.
+   - A lone text frame takes its natural width (50-75% of the box) and is centred,
+     so three short lines are not spread across the whole box.
+   - Route steps are at most 520 px wide and the route is centred as a group.
+   - The group is centred in the content box (Part A).
+   ========================================================================= */
+.dh .frame .cap { text-align: left; }
+.dh .body:not(.col) > .frame { min-width: min(360px, 28%); }
+.dh:not(.cover, .section) .main > .frame:not(:has(.pic, .rs-figure, img, iframe, video, .embed-frame)),
+.dh .main > .body:not(.col) > .frame:only-child:not(:has(.pic, .rs-figure, img, iframe, video, .embed-frame)) {
+  flex: 0 1 auto !important;
+  width: 60%;
+  align-self: center !important;
+}
+.dh .main > .body:not(.col):has(> .frame:only-child) { justify-content: center; }
+.dh .route { justify-content: center; }
+.dh .route .step { max-width: 520px; }
+
+/* Scrollable image frame: <div class="frame scroll"><span class="label">…</span><Figure id="…"/></div>
+   The frame fills the content box; the image shows at the full frame width and its natural
+   height, and scrolls vertically inside the frame from the top (thin, faint scrollbar).
+   The label stays on the frame border. For very tall images (a whole newspaper page). */
+.dh .frame.scroll { padding-right: 16px !important; }
+.dh .frame.scroll > :is(.rs-figure, .pic) {
+  display: block !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(17, 17, 17, .22) transparent;
+  position: relative;
+}
+.dh .frame.scroll > :is(.rs-figure, .pic) img {
+  position: static !important;
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  flex: none !important;
+  object-fit: fill !important;
+  border: 0 !important;
+  padding: 0 !important;
+}
+
+/* Labels and bars never run past their frame: one line, at most the frame width minus its
+   insets (20 px each side), truncated with an ellipsis. (Also keeps the theme's fit from
+   shrinking a whole body just because a label is long.) */
+.dh .frame > .label {
+  max-width: calc(100% - 40px);
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dh .file-bar {
+  display: block !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dh .browser-bar { flex-wrap: nowrap; }
+.dh .browser-bar > .url { white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.dh .term-bar { flex-wrap: nowrap; }
+.dh .term-bar > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* the OpenCode window title is centred between the three window dots: keep it clear of them */
+.dh div.term > .term-bar { padding-left: 96px; padding-right: 96px; }
+
+/* OpenCode window (.term) alone under the title: shown like a picture of an app window,
+   not a full-width strip: about 1320 px wide (never wider than the box), at least 620 px
+   tall so it reads as a window (taller if the content needs it), centred both ways.
+   Inside a .body next to a frame or figure it keeps its share (Part A, 5). */
+.dh:not(.cover, .section) .main > .term {
+  flex: 0 0 auto !important;
+  width: min(1320px, 100%);
+  min-height: min(620px, 100%);
+  align-self: center !important;
+}
+.dh:not(.cover, .section) .main > .term > pre { flex: 1 1 auto; }
+
+/* File tree: <div class="tree"><span class="label">root-folder/</span><pre>
+   ├─ name/        <span class="dim">description</span>
+   └─ name         <span class="hl">the entry that matters</span>
+   </pre></div>
+   A frame-like box with the root folder on its top border (like frame labels, but keeping
+   the folder's case), mono names, grey descriptions aligned by spaces, natural width, centred.
+   In a .body it sits beside a frame at its natural width. */
+.dh .tree {
+  position: relative;
+  flex: 0 0 auto !important;
+  width: fit-content;
+  max-width: 100%;
+  align-self: center !important;
+  border: 1.5px solid var(--dh-frame);
+  background: var(--dh-paper);
+  padding: 0 44px 30px 40px;
+  font: 400 28px/1.55 var(--dh-mono);
+  color: var(--dh-ink);
+}
+.dh .tree > .label {
+  position: absolute; top: 0; left: 20px; transform: translateY(-50%);
+  padding: 0 12px; background: var(--dh-paper); line-height: 1;
+  font: 400 22px/1 var(--dh-mono); letter-spacing: .02em; text-transform: none; color: var(--dh-subtle);
+  max-width: calc(100% - 40px); box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* the JSX pipeline keeps the newline after <pre>: that empty first line is the top padding */
+.dh .tree pre { margin: 0; padding: 0; border: 0; background: none; font: inherit; color: inherit; white-space: pre; overflow: visible; }
+.dh .tree .dim { color: var(--dh-subtle); }
+.dh .tree .hl { color: var(--dh-accent); }
+.dh .body:not(.col) > .tree { align-self: center !important; }
+.dh .main > .body:has(> .tree):not(:has(.pic, .rs-figure, img, iframe, video, .embed-frame, .term, .file, .browser)) { justify-content: center; align-items: center; }
+.dh .main > .body:has(> .tree) > .frame { flex: 0 1 auto !important; }
+
+/* =========================================================================
+   Deck-wide defaults pass (Bo)
+   ========================================================================= */
+/* (1) Ordered lists in frames show their numbers: mono, red, like the bullets. */
+.dh .main .frame :is(.text, .frame) ol,
+.dh .main .frame > ol { list-style: none !important; padding-left: 0 !important; counter-reset: dh-ol; }
+.dh .main .frame :is(.text, .frame) ol > li,
+.dh .main .frame > ol > li { counter-increment: dh-ol; padding-left: 1.5em !important; }
+.dh .main .frame :is(.text, .frame) ol > li::before,
+.dh .main .frame > ol > li::before { content: counter(dh-ol) "."; display: inline-block; width: 1.5em; margin-left: -1.5em; font: 400 .72em var(--dh-mono); color: var(--dh-accent); }
+
+/* (3) Plain tables: natural width (columns hug their content, 48 px apart), 32 px body
+   (compact: 26 px), centred as a group; long tables still shrink with the fit. */
+.dh:not(.cover, .section) .main > table { align-self: center !important; width: auto; }
+/* same specificity as the theme's table rules (this sheet loads later, so it wins);
+   compact (.dh.compact …) is more specific and keeps its 26 px */
+.dh .main > table { font-size: 32px; }
+.dh .main > table th { font-size: 19px; padding-right: 48px; }
+.dh .main > table td { padding-right: 48px; }
+.dh .main > table :is(th, td):last-child { padding-right: 0; }
+
+/* (4) Rows: one label column at its natural width for all rows (subgrid), 48 px to the
+   text, the block centred. */
+.dh .rows { display: grid !important; grid-template-columns: max-content minmax(0, auto); column-gap: 48px; width: fit-content; max-width: 100%; align-self: center !important; }
+.dh .rows > .row { grid-column: 1 / -1; grid-template-columns: subgrid !important; column-gap: 48px; }
+.dh .main > .body:has(> .rows) { justify-content: center; }
+
+/* (5) Image frames side by side: each frame takes its image's natural shape at the height
+   of the row, as large as fits, the group centred. */
+.dh .main > .body:not(.col):not(:has(> :not(.frame:has(.pic)))) { justify-content: center; align-items: stretch; }
+.dh .main > .body:not(.col):not(:has(> :not(.frame:has(.pic)))) > .frame { flex: 0 1 auto !important; width: auto; min-width: 0 !important; }
+.dh .main > .body:not(.col):not(:has(> :not(.frame:has(.pic)))) > .frame .pic { display: flex; justify-content: center; }
+.dh .main > .body:not(.col):not(:has(> :not(.frame:has(.pic)))) > .frame .pic img {
+  position: static !important; height: 100% !important; width: auto !important; max-width: 100% !important;
+}
+
+/* (6) A .sub placed after the content belongs to the content group: right under it. */
+.dh:not(.cover, .section) .main > :not(h1):has(+ .sub:last-child) { margin-bottom: 0 !important; }
+.dh:not(.cover, .section) .main > :not(h1) + .sub:last-child { margin: 18px 0 auto !important; }
+/* If markdown wraps a full-width React component (<LazyDemo>) inside <p>, let it span 100% width */
+.dh:not(.cover, .section) .main > p:has(> div) { max-width: 100% !important; width: 100% !important; margin-top: auto; margin-bottom: auto; }
+
+/* (7) Route step text larger. */
+.dh .route .what { font-size: 42px; }
+.dh .route .how { font-size: 32px; }
+
+/* Markdown rendered inside a frame looks like Markdown: clear headings (h3 larger and bolder,
+   h4 smaller), numbered lists (above), blockquote with a left rule in grey italic, inline code
+   in mono on a light tint, links underlined. */
+.dh .main .frame .text h3 { font: 600 40px/1.25 var(--dh-sans); color: var(--dh-ink); margin: 0 0 14px; }
+.dh .main .frame .text h4 { font: 600 30px/1.3 var(--dh-sans); color: var(--dh-ink); margin: 18px 0 8px; }
+.dh .main .frame .text :is(h3, h4):first-child { margin-top: 0; }
+.dh .main .frame .text blockquote { margin: 10px 0 14px; padding: 2px 0 2px 22px; border-left: 4px solid var(--dh-faint); color: var(--dh-subtle); font-style: italic; }
+.dh .main .frame .text blockquote p { margin: 0; }
+.dh .main .frame .text code { font-family: var(--dh-mono); font-size: .78em; background: rgba(17, 17, 17, .06); padding: 0 .28em; line-height: 1.2; }
+.dh .rows .plain code, .dh .main > table code { font-family: var(--dh-mono); font-size: .8em; padding: 0 .25em; line-height: 1.2; }
+.dh .main .frame .text a { color: inherit; text-decoration: underline; text-decoration-color: var(--dh-accent); text-underline-offset: .18em; }
+
+/* =========================================================================
+   JSON viewer: <div class="json" data-src="url or label"><pre>…raw JSON…</pre></div>
+   json-view.ts (started from global-top.tsx) renders it like a browser's JSON viewer;
+   the raw <pre> is hidden only once the rendered view exists, so it never disappears.
+   Colours are named here so the theme tokens can take them over.
+   ========================================================================= */
+.dh {
+  --json-key: var(--dh-ink);
+  --json-str: #2f6b4f;   /* muted green, 6.3:1 on white */
+  --json-lit: #1e3a8a;   /* numbers, true/false/null: dark blue, 10.4:1 on white */
+  --json-pun: var(--dh-subtle);
+}
+.dh .json {
+  display: flex; flex-direction: column; flex: 0 0 auto; min-width: 0; min-height: 0;
+  border: 1px solid var(--dh-ink); background: var(--dh-paper); overflow: hidden;
+  font: 400 24px/1.55 var(--dh-mono); color: var(--dh-ink);
+}
+.dh .json > pre { margin: 0; border: 0; padding: 2px 28px 22px; font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; background: none; }
+.dh .json:has(> .json-view) > pre { display: none; }
+.dh .json-view { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
+.dh .json-bar { flex: none; padding: 12px 24px; background: #f5f5f4; border-bottom: 1px solid var(--dh-ink); display: flex; }
+.dh .json-bar .url { flex: 1 1 auto; min-width: 0; padding: 6px 14px; background: var(--dh-paper); border: 1px solid var(--dh-faint); color: var(--dh-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dh .json-body { padding: 18px 28px 22px; overflow: hidden; }
+/* one line per source line; source indentation becomes the indent; a wrapped line hangs 2 ch deeper */
+.dh .j-line { padding-left: calc((var(--ind, 0) + 2) * 1ch); text-indent: -2ch; white-space: pre-wrap; overflow-wrap: anywhere; }
+.dh .j-key { color: var(--json-key); }
+.dh .j-str { color: var(--json-str); }
+.dh :is(.j-num, .j-lit) { color: var(--json-lit); }
+.dh :is(.j-pun, .j-ell) { color: var(--json-pun); }
+.dh .j-txt { color: var(--dh-body); }
+.dh .json .dim, .dh .json .dim * { color: var(--dh-subtle); }
+.dh .json .hl { font-weight: 700; text-decoration: underline; text-decoration-color: var(--dh-accent); text-decoration-thickness: 3px; text-underline-offset: 5px; background: rgba(227, 31, 39, .10); }
+/* placement: like the other panels */
+.dh:not(.cover, .section) .main > .json { width: min(1400px, 100%); align-self: center !important; }
+.dh .body:not(.col) > .json { flex: 3 1 0% !important; }
+.dh .body:not(.col):has(> .json) > .frame { flex: 2 1 0% !important; }
+.dh .body.col > .json { flex: 0 0 auto !important; }
+
+/* Tables in a frame never cross the frame (fit-tables.ts steps the font down to 26 px, then
+   sets [data-wrap]): with [data-wrap] cells may wrap at spaces; values without spaces stay whole. */
+.dh .frame .text table { max-width: 100%; }
+.dh .frame .text table[data-wrap] :is(th, td) { white-space: normal; }
+/* a cell with an inline bar keeps the bar and its number together */
+.dh .frame .text table[data-wrap] td:has(> :is(.cell-bar, span[style*="inline-block"])) { white-space: nowrap; }

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="540" viewBox="0 0 1440 540">
+  <rect width="1440" height="540" fill="#ffffff"/>
+
+  <!-- Outer: Level 3 E2E -->
+  <rect x="30" y="36" width="1380" height="474" fill="#faf9f5" stroke="#111" stroke-width="2.5" stroke-dasharray="9,6"/>
+  <rect x="56" y="16" width="660" height="38" fill="#111"/>
+  <text x="76" y="41" fill="#fff" font-family="ui-monospace, Menlo, monospace" font-size="18" font-weight="700">LEVEL 3 · END-TO-END TEST (Playwright · ~2.0s · Real Browser)</text>
+  <text x="64" y="92" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="21">Opens Chromium → clicks #npc-expert-1 → sends question → checks 0 console errors &amp; screenshot</text>
+
+  <!-- Browser UI Box on Left -->
+  <rect x="64" y="130" width="350" height="340" fill="#fff" stroke="#111" stroke-width="2"/>
+  <rect x="64" y="130" width="350" height="42" fill="#27272a"/>
+  <text x="84" y="157" fill="#fff" font-family="ui-monospace, Menlo, monospace" font-size="17" font-weight="700">Browser Viewport (1280×720)</text>
+  <text x="84" y="208" fill="#111" font-family="Arial, sans-serif" font-size="21" font-weight="700">Bow Deck UI &amp; Assets</text>
+  <text x="84" y="250" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="19">• Portrait &amp; deck images (200 OK)</text>
+  <text x="84" y="286" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="19">• Button click listeners</text>
+  <text x="84" y="322" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="19">• Dialogue box overflow check</text>
+  <text x="84" y="360" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="19">• Saved proof PNG</text>
+  <text x="84" y="438" fill="#e31f27" font-family="ui-monospace, Menlo, monospace" font-size="16" font-weight="700">Only E2E catches broken UI!</text>
+
+  <!-- Middle: Level 2 Integration -->
+  <rect x="454" y="130" width="920" height="340" fill="#fff8f6" stroke="#e31f27" stroke-width="2.5"/>
+  <rect x="478" y="112" width="660" height="36" fill="#e31f27"/>
+  <text x="496" y="136" fill="#fff" font-family="ui-monospace, Menlo, monospace" font-size="18" font-weight="700">LEVEL 2 · INTEGRATION TEST (pytest / Vitest · ~0.3s)</text>
+  <text x="482" y="184" fill="#111" font-family="Arial, sans-serif" font-size="20">Verifies files &amp; API work together: CSV locators ↔ world.json ↔ POST /api/chat</text>
+
+  <rect x="482" y="216" width="360" height="224" fill="#fff" stroke="#111" stroke-width="1.8"/>
+  <text x="504" y="254" fill="#111" font-family="ui-monospace, Menlo, monospace" font-size="18" font-weight="700">Cross-Module Wiring</text>
+  <text x="504" y="294" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="19">• bashan-evidence.csv</text>
+  <text x="504" y="330" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="19">• game/world.json zones</text>
+  <text x="504" y="366" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="19">• FastAPI /api/chat JSON</text>
+  <text x="504" y="414" fill="#e31f27" font-family="ui-monospace, Menlo, monospace" font-size="15" font-weight="700">Catches mismatched IDs</text>
+
+  <!-- Innermost: Level 1 Unit -->
+  <rect x="874" y="216" width="472" height="224" fill="#f0fdf4" stroke="#15803d" stroke-width="2.5"/>
+  <rect x="894" y="198" width="400" height="34" fill="#15803d"/>
+  <text x="912" y="221" fill="#fff" font-family="ui-monospace, Menlo, monospace" font-size="17" font-weight="700">LEVEL 1 · UNIT TEST (&lt; 0.05s)</text>
+  <text x="900" y="268" fill="#111" font-family="Arial, sans-serif" font-size="20" font-weight="700">Pure Rules &amp; Single Schema</text>
+  <text x="900" y="306" fill="#3f3f3a" font-family="ui-monospace, Menlo, monospace" font-size="17">• violates_1985_cutoff(q)</text>
+  <text x="900" y="340" fill="#3f3f3a" font-family="ui-monospace, Menlo, monospace" font-size="17">• evidenceLevel ∈ {据,推断,设}</text>
+  <text x="900" y="374" fill="#3f3f3a" font-family="ui-monospace, Menlo, monospace" font-size="17">• "## What you do not know"</text>
+  <text x="900" y="414" fill="#15803d" font-family="ui-monospace, Menlo, monospace" font-size="15" font-weight="700">Zero network · Zero server</text>
+</svg>

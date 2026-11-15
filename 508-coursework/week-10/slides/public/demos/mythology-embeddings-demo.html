@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pre-Computed Mythology Embeddings · Static $0/mo Search</title>
+  <style>
+    :root {
+      --bg: #ffffff; --ink: #111111; --muted: #5b5b55; --red: #e31f27;
+      --green: #16794b; --blue: #1d4ed8; --rule: #dededc; --soft: #f7f7f4;
+      --sans: 'DM Sans', -apple-system, sans-serif;
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 14px 18px; font-family: var(--sans); background: var(--bg); color: var(--ink); }
+    .top { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; border-bottom: 1.5px solid #111; padding-bottom: 10px; margin-bottom: 14px; }
+    .qbtn { font: 700 12px/1.2 var(--mono); padding: 8px 12px; border: 1.5px solid #111; background: #fff; cursor: pointer; }
+    .qbtn.active { background: var(--red); border-color: var(--red); color: #fff; }
+    .grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 16px; }
+    .box { position: relative; border: 1.5px solid #111; padding: 18px 14px 12px; background: #fff; }
+    .lbl {
+      position: absolute; top: 0; left: 12px; transform: translateY(-50%);
+      background: #fff; padding: 0 7px; font: 700 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--red);
+    }
+    .hit { padding: 8px 10px; border: 1px solid var(--rule); background: var(--soft); margin-bottom: 7px; }
+    .bar-bg { height: 6px; background: #e5e5e0; margin-top: 5px; }
+    .bar-fg { height: 100%; background: var(--red); }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <span style="font:700 12px/1 var(--mono);text-transform:uppercase">Select Motif Query:</span>
+    <button class="qbtn active" id="q-flood" onclick="runQuery('flood')">🌊 Great Flood &amp; Renewal</button>
+    <button class="qbtn" id="q-fire" onclick="runQuery('fire')">🔥 Stealing Fire for Mortals</button>
+    <button class="qbtn" id="q-under" onclick="runQuery('under')">🕳️ Descent to Underworld</button>
+    <button class="qbtn" id="q-cosmos" onclick="runQuery('cosmos')">🥚 Cosmic Egg &amp; Sky Pillar</button>
+    <span style="margin-left:auto;font:700 11.5px/1 var(--mono);color:var(--green)">Runtime API calls: 0 · Cost: $0.00/mo</span>
+  </div>
+
+  <div class="grid">
+    <div class="box">
+      <span class="lbl">STATIC VECTOR SPACE · public/embeddings.f16.bin (2.0 MB · Pre-Computed Once)</span>
+      <svg id="vec-map" viewBox="0 0 500 295" width="100%" style="background:#faf9f5;border:1px solid var(--rule)"></svg>
+      <div style="display:flex;justify-content:space-between;font:600 11.5px/1.3 var(--mono);color:var(--muted);margin-top:6px">
+        <span>Build step: Python embeds 3,000 entries once ($0.04)</span>
+        <span>Browser step: Pure JS dot-product in 0.6 ms</span>
+      </div>
+    </div>
+
+    <div class="box">
+      <span class="lbl">TOP COSINE-SIMILARITY MATCHES IN BROWSER MEMORY</span>
+      <div id="results"></div>
+    </div>
+  </div>
+
+  <script>
+    const MYTHS = [
+      { id: 'yu', title: '大禹治水 (Yu Channels the Great Flood)', trad: 'Chinese · 山海经 / 尚书', x: 105, y: 78, v: [0.96, 0.08, 0.04, 0.22] },
+      { id: 'deuc', title: 'Deucalion & Pyrrha’s Ark on Parnassus', trad: 'Greek · Apollodorus 1.7', x: 145, y: 62, v: [0.94, 0.05, 0.09, 0.14] },
+      { id: 'utna', title: 'Utnapishtim & the Cedar Boat of Shuruppak', trad: 'Mesopotamian · Gilgamesh XI', x: 82, y: 112, v: [0.93, 0.04, 0.15, 0.12] },
+      { id: 'nuwa', title: '女娲补天 (Nüwa Mends the Broken Sky & Floods)', trad: 'Chinese · 淮南子·览冥训', x: 176, y: 118, v: [0.76, 0.16, 0.05, 0.72] },
+      { id: 'prom', title: 'Prometheus Hides Ember in a Fennel Stalk', trad: 'Greek · Hesiod, Theogony', x: 382, y: 76, v: [0.08, 0.97, 0.09, 0.11] },
+      { id: 'sui', title: '燧人氏钻木取火 (Suiren Drills Wood for Fire)', trad: 'Chinese · 韩非子·五蠹', x: 420, y: 104, v: [0.10, 0.92, 0.04, 0.15] },
+      { id: 'maui', title: 'Māui Tricks Mahuika for Fire Nails', trad: 'Polynesian · Oral Cycle', x: 356, y: 115, v: [0.09, 0.91, 0.12, 0.09] },
+      { id: 'inan', title: 'Inanna Passes the Seven Gates of Kur', trad: 'Sumerian · Descent of Inanna', x: 378, y: 226, v: [0.07, 0.08, 0.97, 0.08] },
+      { id: 'orph', title: 'Orpheus & Eurydice Looking Back at Hades', trad: 'Greek · Ovid, Met. X', x: 422, y: 245, v: [0.05, 0.09, 0.94, 0.06] },
+      { id: 'izan', title: 'Izanagi Enters Yomi-tsu-kuni with Torch', trad: 'Japanese · Kojiki §9', x: 336, y: 248, v: [0.08, 0.14, 0.91, 0.11] },
+      { id: 'pangu', title: '盘古开天辟地 (Pangu Splits the Cosmic Egg)', trad: 'Chinese · 三五历纪', x: 122, y: 232, v: [0.18, 0.09, 0.07, 0.96] },
+      { id: 'ymir', title: 'Ymir’s Body Shapes Earth & Sky Vault', trad: 'Norse · Prose Edda', x: 168, y: 252, v: [0.15, 0.07, 0.11, 0.92] }
+    ];
+
+    const QUERIES = {
+      flood: { label: 'Query vector: “deluge, ark, taming waters”', x: 118, y: 88, v: [0.98, 0.05, 0.06, 0.18] },
+      fire:  { label: 'Query vector: “theft of fire for mortals”', x: 388, y: 96, v: [0.07, 0.98, 0.08, 0.10] },
+      under: { label: 'Query vector: “journey into land of the dead”', x: 382, y: 238, v: [0.06, 0.09, 0.98, 0.07] },
+      cosmos:{ label: 'Query vector: “primordial egg, propping up sky”', x: 148, y: 215, v: [0.22, 0.08, 0.07, 0.96] }
+    };
+
+    function cos(a, b) {
+      let dot = 0, na = 0, nb = 0;
+      for (let i = 0; i < a.length; i++) { dot += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i]; }
+      return dot / (Math.sqrt(na) * Math.sqrt(nb));
+    }
+
+    function runQuery(key) {
+      for (const k of ['flood', 'fire', 'under', 'cosmos']) {
+        document.getElementById('q-' + k).className = 'qbtn' + (k === key ? ' active' : '');
+      }
+      const q = QUERIES[key];
+      const scored = MYTHS.map(m => ({ ...m, score: cos(q.v, m.v) })).sort((a, b) => b.score - a.score);
+      const topIds = new Set(scored.slice(0, 4).map(m => m.id));
+
+      const svg = document.getElementById('vec-map');
+      const lines = scored.slice(0, 4).map(m =>
+        `<line x1="${q.x}" y1="${q.y}" x2="${m.x}" y2="${m.y}" stroke="#e31f27" stroke-width="2" stroke-dasharray="4,3" />`
+      ).join('');
+      const nodes = scored.map(m => {
+        const hi = topIds.has(m.id);
+        return `<g>
+          <circle cx="${m.x}" cy="${m.y}" r="${hi ? 7.5 : 5}" fill="${hi ? '#e31f27' : '#9ca3af'}" stroke="#111" stroke-width="1.2"/>
+          <text x="${m.x + 10}" y="${m.y + 4}" font-family="DM Sans, sans-serif" font-size="${hi ? '11.5' : '10.5'}" font-weight="${hi ? '700' : '400'}" fill="${hi ? '#111' : '#6b7280'}">${m.title.split(' (')[0]}</text>
+        </g>`;
+      }).join('');
+      const qPin = `<g>
+        <circle cx="${q.x}" cy="${q.y}" r="10" fill="none" stroke="#1d4ed8" stroke-width="2.5"/>
+        <circle cx="${q.x}" cy="${q.y}" r="4" fill="#1d4ed8"/>
+        <rect x="10" y="10" width="315" height="24" fill="#111"/>
+        <text x="18" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#fff">${q.label}</text>
+      </g>`;
+      svg.innerHTML = lines + nodes + qPin;
+
+      document.getElementById('results').innerHTML = scored.slice(0, 4).map((m, idx) => `
+        <div class="hit">
+          <div style="display:flex;justify-content:space-between;font-size:13.5px;font-weight:700">
+            <span>#${idx + 1} · ${m.title}</span>
+            <span style="font-family:var(--mono);color:var(--red)">cos = ${m.score.toFixed(3)}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${m.trad}</div>
+          <div class="bar-bg"><div class="bar-fg" style="width:${Math.round(m.score * 100)}%"></div></div>
+        </div>
+      `).join('');
+    }
+    runQuery('flood');
+  </script>
+</body>
+</html>

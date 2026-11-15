@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="580" viewBox="0 0 1440 580">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#111"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#e31f27"/>
+    </marker>
+    <marker id="arr-grn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#15803d"/>
+    </marker>
+  </defs>
+  <rect width="1440" height="580" fill="#ffffff"/>
+
+  <!-- Outer container: One Session Execution -->
+  <rect x="30" y="36" width="1380" height="508" fill="#faf9f5" stroke="#111" stroke-width="2.5"/>
+  <rect x="54" y="18" width="520" height="36" fill="#111"/>
+  <text x="72" y="42" fill="#fff" font-family="ui-monospace, Menlo, monospace" font-size="18" font-weight="700">OPENCODE /goal LOOP (PR #59437 · ONE EXECUTION)</text>
+
+  <!-- Step 1: /goal command + Plan -->
+  <rect x="64" y="100" width="280" height="240" fill="#fff" stroke="#111" stroke-width="2"/>
+  <rect x="64" y="100" width="280" height="44" fill="#e31f27"/>
+  <text x="82" y="129" fill="#fff" font-family="ui-monospace, Menlo, monospace" font-size="18" font-weight="700">1. KICKOFF + PLAN</text>
+  <text x="82" y="178" fill="#111" font-family="Arial, sans-serif" font-size="22" font-weight="700">/goal &lt;objective&gt;</text>
+  <text x="82" y="214" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="19">• Saved in session metadata</text>
+  <text x="82" y="246" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="19">• Anchored to PLAN.md</text>
+  <text x="82" y="278" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="19">• TUI footer: ◎ goal</text>
+  <text x="82" y="314" fill="#e31f27" font-family="ui-monospace, Menlo, monospace" font-size="16" font-weight="700">Prevents: vague start</text>
+
+  <!-- Arrow 1 -> 2 -->
+  <line x1="344" y1="220" x2="398" y2="220" stroke="#111" stroke-width="3" marker-end="url(#arr)"/>
+
+  <!-- Step 2: Agent Step + Verification Tools -->
+  <rect x="406" y="100" width="320" height="240" fill="#fff" stroke="#111" stroke-width="2"/>
+  <rect x="406" y="100" width="320" height="44" fill="#111"/>
+  <text x="424" y="129" fill="#fff" font-family="ui-monospace, Menlo, monospace" font-size="18" font-weight="700">2. WORK + TOOLS</text>
+  <text x="424" y="178" fill="#111" font-family="Arial, sans-serif" font-size="21" font-weight="700">Edit → Compile → Test</text>
+  <text x="424" y="214" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="19">• Writes code &amp; JSON</text>
+  <text x="424" y="246" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="19">• Runs pytest / Vitest</text>
+  <text x="424" y="278" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="19">• Checks Playwright MCP</text>
+  <text x="424" y="314" fill="#15803d" font-family="ui-monospace, Menlo, monospace" font-size="16" font-weight="700">Real evidence in history</text>
+
+  <!-- Arrow 2 -> 3 -->
+  <line x1="726" y1="220" x2="780" y2="220" stroke="#111" stroke-width="3" marker-end="url(#arr)"/>
+
+  <!-- Step 3: Session idle Hook + Reviewer -->
+  <rect x="788" y="100" width="320" height="240" fill="#fff8f6" stroke="#e31f27" stroke-width="2.5"/>
+  <rect x="788" y="100" width="320" height="44" fill="#e31f27"/>
+  <text x="806" y="129" fill="#fff" font-family="ui-monospace, Menlo, monospace" font-size="18" font-weight="700">3. IDLE HOOK REVIEWER</text>
+  <text x="806" y="178" fill="#111" font-family="Arial, sans-serif" font-size="21" font-weight="700">"Is the goal truly met?"</text>
+  <text x="806" y="214" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="19">• Reads full tool output</text>
+  <text x="806" y="246" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="19">• Waits if subagent busy</text>
+  <text x="806" y="278" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="19">• JSON verdict: done /</text>
+  <text x="822" y="306" fill="#111" font-family="ui-monospace, Menlo, monospace" font-size="17" font-weight="700">continue / blocked</text>
+
+  <!-- Arrow 3 -> 4 (Done) -->
+  <line x1="1108" y1="185" x2="1166" y2="185" stroke="#15803d" stroke-width="3.5" marker-end="url(#arr-grn)"/>
+  <rect x="1174" y="110" width="206" height="145" fill="#f0fdf4" stroke="#15803d" stroke-width="2.5"/>
+  <text x="1192" y="148" fill="#15803d" font-family="ui-monospace, Menlo, monospace" font-size="18" font-weight="700">◎ goal met</text>
+  <text x="1192" y="184" fill="#111" font-family="Arial, sans-serif" font-size="19">All tests green;</text>
+  <text x="1192" y="212" fill="#111" font-family="Arial, sans-serif" font-size="19">one notification</text>
+  <text x="1192" y="240" fill="#15803d" font-family="ui-monospace, Menlo, monospace" font-size="15">verdict: "done"</text>
+
+  <!-- Pause Guard Box -->
+  <rect x="1174" y="278" width="206" height="132" fill="#fffbeb" stroke="#b45309" stroke-width="2"/>
+  <text x="1192" y="312" fill="#b45309" font-family="ui-monospace, Menlo, monospace" font-size="17" font-weight="700">◎ goal paused</text>
+  <text x="1192" y="344" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="18">3 stalled rounds</text>
+  <text x="1192" y="370" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="18">or 50-turn cap</text>
+  <text x="1192" y="396" fill="#b45309" font-family="ui-monospace, Menlo, monospace" font-size="15">no infinite burn</text>
+  <line x1="1108" y1="305" x2="1166" y2="325" stroke="#b45309" stroke-width="2.5"/>
+
+  <!-- Loopback Arrow: Reviewer "continue" -> restates objective -> Step 2 -->
+  <path d="M 948 340 L 948 468 L 566 468 L 566 348" fill="none" stroke="#e31f27" stroke-width="3.5" marker-end="url(#arr-red)"/>
+  <rect x="605" y="438" width="310" height="54" fill="#fff" stroke="#e31f27" stroke-width="2"/>
+  <text x="622" y="462" fill="#e31f27" font-family="ui-monospace, Menlo, monospace" font-size="16" font-weight="700">verdict: "continue"</text>
+  <text x="622" y="483" fill="#111" font-family="Arial, sans-serif" font-size="16">Restates objective + next step</text>
+</svg>

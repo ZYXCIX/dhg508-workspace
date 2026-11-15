@@ -1,0 +1,6 @@
+layer,service,unit,cost,when
+"Static hosting","Cloudflare Pages / GitHub Pages","Unlimited static requests","$0 / month","HTML games, WebGL builds, pre-computed JSON"
+"API worker proxy","Cloudflare Workers","100,000 requests / day","$0 / month ($5 Pro)","Hiding API keys, rate limiting, live NPC chat"
+"Pre-computed embeddings","text-embedding-3-small / Gemini","2,000 myth passages (~1M tokens)","$0.02 one-time","Comparative mythology search — computed once locally"
+"Live NPC dialogue","DeepSeek / Gemini Flash (OpenRouter)","1,000 player turns (~1.5M tokens)","$0.20 – $0.45","Bashan bow-deck conversations"
+"Virtual machine (VPS)","Hetzner / DigitalOcean","2 vCPU · 4 GB RAM · 40 GB SSD","$4.50 – $6 / month","Heavy Python backends, SQLite/Postgres writes"

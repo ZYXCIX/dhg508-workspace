@@ -1,0 +1,12 @@
+/* One-line model card, pinned under the title (it is a .sub, so the layout places it there).
+   Markup: <div class="sub mcard"><span class="f on"><b>Label</b>value</span> …</div>
+   .on marks the field the slide explains. */
+.dh .main > .sub.mcard { display: flex; flex-wrap: nowrap; align-self: stretch; margin: 18px 0 28px; border: 1px solid var(--dh-ink); font: 400 24px/1.25 var(--dh-sans); color: var(--dh-body); }
+.dh .mcard .f { flex: 1 1 auto; padding: 10px 16px 12px; border-right: 1px solid color-mix(in srgb, var(--dh-ink) 20%, transparent); white-space: nowrap; }
+.dh .mcard .f:last-child { border-right: 0; }
+.dh .mcard .f b { display: block; margin-bottom: 4px; font: 400 14px/1.2 var(--dh-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--dh-subtle); }
+.dh .mcard .f.on { color: var(--dh-accent); box-shadow: inset 0 -5px 0 var(--dh-accent); }
+.dh .mcard .f.on b { color: var(--dh-accent); }
+/* A large file-type badge at the top of a frame: <p class="badge">.md</p> */
+.dh .main .frame .badge { margin: 4px 0 18px; font: 500 46px/1.1 var(--dh-mono); color: var(--dh-ink); letter-spacing: -.01em; }
+.dh .main .frame.hot .badge { color: var(--dh-accent); }

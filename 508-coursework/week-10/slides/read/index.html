@@ -1,0 +1,1116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Autonomous /goal, Feedback Loops, and Deployment</title>
+<meta name="citation_title" content="Autonomous /goal, Feedback Loops, and Deployment">
+<meta name="citation_author" content="Bo An · Lingnan University">
+<meta name="citation_publication_date" content="2026-11-11">
+<meta name="citation_language" content="en">
+<meta name="DC.title" content="Autonomous /goal, Feedback Loops, and Deployment">
+<meta name="DC.type" content="Presentation">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"PresentationDigitalDocument","name":"Autonomous /goal, Feedback Loops, and Deployment","inLanguage":"en","author":[{"@type":"Person","name":"Bo An · Lingnan University"}],"datePublished":"2026-11-11","license":"CC BY-NC 4.0"}</script>
+<style>
+:root{--ink:#111;--body:#222;--sub:#6b7280;--rule:rgba(17,17,17,.14);--red:#e31f27;--paper:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#f2f2f0;--body:#dedede;--sub:#9aa0aa;--rule:rgba(255,255,255,.18);--paper:#141414}}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{overflow-wrap:anywhere}
+body{margin:0;background:var(--paper);color:var(--body);font:400 18px/1.62 "Newsreader",Georgia,"Songti SC","Noto Serif CJK SC",serif}
+main{max-width:42rem;margin:0 auto;padding:2.5rem 1.25rem 5rem}
+header.t{margin-bottom:3rem}h1{font-weight:400;font-size:clamp(2rem,6vw,3rem);line-height:1.1;color:var(--ink);margin:0 0 .6rem}
+.m{font:400 .8rem/1.5 ui-monospace,Menlo,monospace;color:var(--sub);letter-spacing:.02em}
+.m a{color:inherit}
+nav.toc{border-block:1px solid var(--rule);padding:1rem 0;margin:2rem 0 3rem}nav.toc ol{margin:0;padding-left:1.4rem}nav.toc a{color:var(--body);text-decoration:none}nav.toc a:hover{color:var(--red)}
+section{margin:0 0 3.25rem;scroll-margin-top:1rem}section>h2{font-weight:400;font-size:1.55rem;line-height:1.22;color:var(--ink);margin:0 0 .85rem}
+section>h2 a{color:inherit;text-decoration:none}section>h2 .no{color:var(--sub);font-variant-numeric:tabular-nums;margin-right:.45em;font-size:.8em}
+.body h1,.body h2{display:none}.body h3{font-size:1.1rem;color:var(--ink)}
+.read{border-left:2px solid var(--red);padding-left:1rem;margin-top:1.1rem;color:var(--ink)}
+figure{margin:1.3rem 0}img{max-width:100%;height:auto;display:block}figcaption{font:400 .82rem/1.45 system-ui,sans-serif;color:var(--sub);margin-top:.5rem}
+.details{font-size:.95rem}table{border-collapse:collapse;width:100%;margin:1.2rem 0;font:400 .9rem/1.4 system-ui,sans-serif}th{text-align:left;font-weight:500;color:var(--sub);border-bottom:1px solid var(--ink);padding:.35rem .8rem .35rem 0}td{border-bottom:1px solid var(--rule);padding:.4rem .8rem .4rem 0;vertical-align:top}caption{text-align:left;color:var(--sub);padding-bottom:.4rem}
+.table-wrap{overflow-x:auto}blockquote{margin:1rem 0;padding-left:1rem;border-left:2px solid var(--rule)}
+a{color:var(--ink);text-decoration-color:var(--red);text-underline-offset:.15em}sup.n a{color:var(--red);text-decoration:none;font-size:.8em}a.c{text-decoration:none;color:var(--sub)}
+.elsewhere,.withheld{font:400 .85rem/1.4 system-ui,sans-serif;color:var(--sub);border:1px dashed var(--rule);padding:.7rem .9rem}
+ol.refs{padding:0;list-style:none}ol.refs li{padding-left:1.6em;text-indent:-1.6em;margin-bottom:.7rem;scroll-margin-top:1rem}ol.refs li:target{color:var(--red)}
+.rs-parallel{font-style:normal}
+@media print{body{font-size:11.5pt}main{max-width:none;padding:0}nav.toc{display:none}section{break-inside:avoid}a{text-decoration:none}}
+</style>
+</head>
+<body>
+<main>
+<header class="t"><h1>Autonomous /goal, Feedback Loops, and Deployment</h1><p class="m">Bo An · Lingnan University · 2026-11-11 · Reading edition · <a href="../">Slides</a></p></header>
+<nav class="toc" aria-label="Contents"><ol><li><a href="#s01-cover">Autonomous `/goal`, Feedback Loops, and Deployment</a></li><li><a href="#s02-today">Tonight: `/goal`, planning, feedback loops, and deployment.</a></li><li><a href="#s03d-goal-how">OpenCode `/goal` runs across turns until an internal reviewer checks done.</a></li><li><a href="#s03e-goal-statement">Write a concrete `/goal` statement anchored to a plan and machine checks.</a></li><li><a href="#s03f-plan-drift">Planning prevents goal drifting: lock `docs/plan.md` before launching `/goal`.</a></li><li><a href="#s03-why-verify">Without a feedback loop, you are the agent's only pair of eyes.</a></li><li><a href="#s04-three-loops">Two feedback loops keep `/goal` on track: Ideation first, Verification second.</a></li><li><a href="#m1-01-sec">Ideation Feedback Loops Before Code</a></li><li><a href="#m1-02-two-ways">Ideation 1 · Ask the agent to restate scope and open questions before coding.</a></li><li><a href="#m1-03-diagrams">Ideation 2 · Have the agent draw a Mermaid state diagram to check logic branches.</a></li><li><a href="#m1-04-images">Ideation 3 · The agent draws a full spatial plan onto Excalidraw automatically.</a></li><li><a href="#m1-05-excalidraw-setup">Set up `mcp-excalidraw-server` in two lines to catch misunderstandings in 10s.</a></li><li><a href="#m1-06-excalidraw-loop">Live demo: edit rooms on Excalidraw and inspect the `get_scene` JSON sent back.</a></li><li><a href="#m1-07-visual-compare">Ideation 4 · Install an HTML diagram skill for visual project schematics.</a></li><li><a href="#m2-01-sec">When two specialist agents work together, let them message each other directly.</a></li><li><a href="#m2-02-git-vs-live">Live MCP chat answers source questions mid-task; Git stores the permanent truth.</a></li><li><a href="#m2-03-mcp-options">Three widely used ways to coordinate specialist coding agents.</a></li><li><a href="#m2-04-mcp-config">Set up OpenCode subagents or `mcp-agent-mail` in one config file.</a></li><li><a href="#m2-05-bashan-a2a">In Bashan, the Game Agent verifies a source boundary before writing dialogue.</a></li><li><a href="#m2-06-truth-in-files">Chat messages coordinate work; repository files remain the source of truth.</a></li><li><a href="#m3-01-sec">Give the agent its own eyes through the browser, the compiler, and automated tests.</a></li><li><a href="#m3-02-agent-eyes">An agent checks cheap static errors first, then live browser state, then full tests.</a></li><li><a href="#m3-03-how-browser-sees">Browser MCP turns invisible UI bugs into four machine-readable signals.</a></li><li><a href="#m3-04-browser-mcp-setup">Browser feedback setup: two commands + one `opencode.json` block.</a></li><li><a href="#m3-05-explore-vs-test">Distinguish live browser exploration from repeatable browser test feedback.</a></li><li><a href="#m3-06-bashan-browser-run">Browser MCP catches a missing Bashan JSON path and fixes it in one turn.</a></li><li><a href="#m3-08-python-compile">Stack four fast Python gates so syntax and type errors die in `0.15s`.</a></li><li><a href="#m3-09-python-opencode-run">Watch the Python check loop catch a wrong Bashan field name in 0.1 seconds.</a></li><li><a href="#m3-10-frontend-engine-build">Every stack in our class has a single one-line build gate for AGENTS.md.</a></li><li><a href="#m4-01-sec">Compile checks prove code parses; tests prove your historical design still works.</a></li><li><a href="#m4-02-three-test-levels">Where Unit, Integration, and End-to-End tests sit inside *Bashan*.</a></li><li><a href="#m4-03b-test-setup">Testing setup from scratch: install `Vitest` / `pytest` + `Playwright` in 60 seconds.</a></li><li><a href="#m4-03-decouple-tree">Separate data and pure logic from the UI so all three test levels stay easy.</a></li><li><a href="#m4-04-unit-concept">Level 1 · Unit tests check single rules and records with zero external dependencies.</a></li><li><a href="#m4-05-bashan-expert-json">Inspect the real Bashan character record that our unit test protects.</a></li><li><a href="#m4-06-bashan-unit-code">Write pure unit tests for Bashan's cutoff rule and character schema.</a></li><li><a href="#m4-07-bashan-unit-run">Unit tests fail with exact pinpointing when an agent drops a citation.</a></li><li><a href="#m4-08-integration-concept">Level 2 · Integration tests verify that separate modules agree at their seams.</a></li><li><a href="#m4-09-bashan-evidence-table">Integration starts from the shared Bashan evidence table.</a></li><li><a href="#m4-10-bashan-integration-code">Test CSV cross-references and the /api/chat endpoint together in 0.4s.</a></li><li><a href="#m4-11-llm-judge-drift">Add an LLM-as-a-Judge audit test when dialogue prompts risk purpose drift.</a></li><li><a href="#m4-12-e2e-playwright">Level 3 · End-to-end Playwright tests walk the real bow deck like a player.</a></li><li><a href="#m4-13-e2e-run-and-stacks">Pick the exact testing recipe that matches your project's technology stack.</a></li><li><a href="#m4-13b-test-workbench">Interactive workbench: inject Unit, Integration, and E2E bugs into *Bashan*.</a></li><li><a href="#m5-01-sec">A project trapped on localhost cannot gather real feedback or readers.</a></li><li><a href="#m5-02-deploy-tiers">Start from pure static hosting and add server layers only when forced.</a></li><li><a href="#m5-03-static-pages">Deploy your project to Cloudflare Pages (+ Worker) in three steps this week.</a></li><li><a href="#m5-04-worker-why">Never expose an API key in browser code—put a Cloudflare Worker in front.</a></li><li><a href="#m5-05-worker-bashan">Twenty lines of Worker code proxy Bashan's live NPC chat safely.</a></li><li><a href="#m5-06-vps-when">Rent a VPS only when your project needs persistent databases or heavy compute.</a></li><li><a href="#m5-08-stripe-lemonsqueezy">Compare standard Stripe, Lemon Squeezy, and Stripe Managed Payments.</a></li><li><a href="#m5-09-precompute-principle">Pre-compute fixed humanities corpora locally so deployment stays nearly free.</a></li><li><a href="#m5-10-mythology-case">Case study · Pre-computing embeddings for a comparative mythology database.</a></li><li><a href="#m5-11-mythology-pipeline">Build the myth vector bundle once in Python, then search in 12 lines of JS.</a></li><li><a href="#m5-11b-mythology-demo">Interactive demo: pre-computed mythology embeddings at `$0/month`.</a></li><li><a href="#m5-12-web-costs">Real 2026 web and AI costs are pennies when you pre-compute static assets.</a></li><li><a href="#m5-13-deploy-checklist">Always run your Playwright smoke test one last time against the deployed URL.</a></li><li><a href="#m6-01-sec">Two weeks remain after tonight: finish a real work, deploy it, and test it on real people.</a></li><li><a href="#m6-02-two-weeks-left">Two weeks remain to turn prototypes into tested, deployed works.</a></li><li><a href="#m6-03-upgrade-bar">Every project requires a full end-to-end upgrade with zero half-baked placeholders.</a></li><li><a href="#m6-03b-this-week">This week's steps (before Wed 18 Nov): deploy, test, and share.</a></li><li><a href="#m6-04-assignment-four-parts">Next week in class (Wed 18 Nov): show all four feedback loops live.</a></li><li><a href="#m6-05-feedback-to-test-bashan">Worked example · Turning a friend's Bashan playtest into code and a test.</a></li><li><a href="#m6-06-closing">Plan clearly, test automatically, and ship live.</a></li></ol></nav>
+<section id="s01-cover"><h2><a href="#s01-cover"><span class="no">1</span>Autonomous `/goal`, Feedback Loops, and Deployment</a></h2>
+<div class="body"><h1>Autonomous <code>/goal</code>, Feedback Loops, and Deployment</h1>
+<p>Preventing goal drift with planning, ideation schematics, automated tests, and Cloudflare shipping</p>
+</div>
+<div class="read"><p>Session Ten shows how to run long autonomous OpenCode <code>/goal</code> sessions without drifting&#x2014;combining explicit planning, ideation schematics, browser and test feedback loops, and Cloudflare deployment.</p>
+</div></section>
+<section id="s02-today"><h2><a href="#s02-today"><span class="no">2</span>Tonight: `/goal`, planning, feedback loops, and deployment.</a></h2>
+<div class="body"><h1>Tonight: <code>/goal</code>, planning, feedback loops, and deployment.</h1>
+<div class="grid">
+<div class="frame hot"><span class="label">01 &#xb7; /goal &amp; Planning</span><div class="text">
+<p><span class="mark">Long autonomous runs</span></p>
+<p>OpenCode <code>/goal</code>, written plans, and preventing goal drift</p>
+</div></div>
+<div class="frame"><span class="label">02 &#xb7; Feedback Loops</span><div class="text">
+<p><span class="mark">Ideation + Verification</span></p>
+<p>Excalidraw, HTML diagrams, Browser MCP, and 3-tier tests</p>
+</div></div>
+<div class="frame"><span class="label">03 &#xb7; Deploy &amp; Ship</span><div class="text">
+<p><span class="mark">Cloudflare + Two Assignments</span></p>
+<p>ship live this week; demonstrate full feedback loops next week</p>
+</div></div>
+</div>
+</div>
+<div class="read"><p>Tonight&apos;s session connects autonomous <code>/goal</code> execution and planning with ideation loops, browser/test verification loops, Cloudflare deployment, and the deliverables for Weeks 10 and 11.</p>
+</div></section>
+<section id="s03d-goal-how"><h2><a href="#s03d-goal-how"><span class="no">3</span>OpenCode `/goal` runs across turns until an internal reviewer checks done.</a></h2>
+<div class="body"><h1>OpenCode <code>/goal</code> runs across turns until an internal reviewer checks done.</h1>
+<div class="frame fit"><span class="label">OpenCode PR #59437 &#xb7; /goal execution architecture</span><div class="pic"><figure><img src="assets/9f1557249c-diag-goal-loop.svg" alt="Diagram of OpenCode&apos;s /goal execution loop showing Kickoff + Plan, Work + Tools, Idle Hook Reviewer, and continue or done verdicts." loading="lazy"><figcaption>OpenCode /goal loop (PR. Course diagram</figcaption></figure></div></div>
+</div>
+<div class="read"><p>Merged in OpenCode PR <code>#59437</code>, <code>/goal &lt;objective&gt;</code> intercepts the session <code>idle</code> boundary and runs an internal reviewer over tool outputs&#x2014;continuing automatically until the objective is verified <code>done</code> or pausing after 3 stalled rounds.</p>
+</div></section>
+<section id="s03e-goal-statement"><h2><a href="#s03e-goal-statement"><span class="no">4</span>Write a concrete `/goal` statement anchored to a plan and machine checks.</a></h2>
+<div class="body"><h1>Write a concrete <code>/goal</code> statement anchored to a plan and machine checks.</h1>
+<div class="body">
+<div class="term">
+<div class="term-bar"><span>OpenCode &#xb7; bashan</span></div>
+<pre>
+<span class="you">/goal Implement Bow Deck dialogue per @docs/plan.md.</span>
+<span class="you">Verify every claim against @data/bashan-evidence.csv,</span>
+<span class="you">pass pytest -q, and verify 0 console errors in Playwright.</span>
+&#xa0;
+<span class="blk">&#x25ce; Goal: Implement Bow Deck dialogue per @docs/plan.md&#x2026;</span>
+<span class="tool">&#x2192; Read</span>   docs/plan.md &#xb7; data/bashan-evidence.csv
+<span class="tool">&#x2190; Edit</span>   src/dialogue_rules.py &#xb7; game/people/expert-1.json
+<span class="blk">&#x24; pytest -q &amp;&amp; npx playwright test</span>
+<span class="ok">&#x25ce; goal met &#xb7; 6 passed, 0 browser errors</span>
+</pre>
+<div class="term-foot">&#x25ce; goal met &#xb7; Build &#xb7; DeepSeek V4.1 Flash &#xb7; high</div>
+</div>
+<div class="frame hot"><span class="label">What backs a good /goal</span><div class="text">
+<ol>
+<li><strong>A written file (<code>@docs/plan.md</code>)</strong>, never a vague wish</li>
+<li><strong>Evidence bounds (<code>@data/&#x2026;</code>)</strong> it must not cross</li>
+<li><strong>Executable gates (<code>pytest</code>, <code>Playwright</code>)</strong> the reviewer can verify</li>
+</ol>
+</div></div>
+</div>
+</div>
+<div class="read"><p>An effective <code>/goal</code> statement binds three things: a written specification (<code>@docs/plan.md</code>), explicit source constraints (<code>@data/bashan-evidence.csv</code>), and executable test commands (<code>pytest</code>, <code>Playwright</code>) that prove completion.</p>
+</div></section>
+<section id="s03f-plan-drift"><h2><a href="#s03f-plan-drift"><span class="no">5</span>Planning prevents goal drifting: lock `docs/plan.md` before launching `/goal`.</a></h2>
+<div class="body"><h1>Planning prevents goal drifting: lock <code>docs/plan.md</code> before launching <code>/goal</code>.</h1>
+<div class="body">
+<div class="file"><div class="file-bar">bashan/docs/plan.md</div><pre>
+# Bow Deck Plan (Approved)
+1. Scope: James Talbot on bashan-anchor only
+2. Non-goals: NO Kornai quotes; NO post-Sep 1985 facts
+3. Steps:
+   - [x] Extract dialogue rules to src/dialogue_rules.py
+   - [ ] Wire game/people/expert-1.json to /api/chat
+   - [ ] Pass pytest + Playwright smoke check
+</pre></div>
+<div class="frame hot"><span class="label">Why goals drift without a plan</span><div class="text">
+<ul>
+<li><strong>Context compaction:</strong> after 20 turns, chat details compress away&#x2014;<code>docs/plan.md</code> on disk never forgets</li>
+<li><strong>Plan mode first (<code>Tab</code>):</strong> agree on steps &amp; non-goals <em>before</em> starting <code>/goal</code></li>
+<li><strong>Checkboxes as state:</strong> the agent ticks <code>[x]</code> as each stage passes</li>
+</ul>
+</div></div>
+</div>
+</div>
+<div class="read"><p>Use OpenCode&apos;s <strong>Plan</strong> mode (<code>Tab</code>) to agree on scope, non-goals, and step checkboxes in <code>docs/plan.md</code> before running <code>/goal</code>, preventing context compaction from causing goal drift.</p>
+</div></section>
+<section id="s03-why-verify"><h2><a href="#s03-why-verify"><span class="no">6</span>Without a feedback loop, you are the agent's only pair of eyes.</a></h2>
+<div class="body"><h3>Manual eyeballing (now)</h3><ul><li>Agent edits five files blindly</li><li>You refresh, walk the ship for three minutes, spot a crash</li><li>You paste a vague complaint back into chat</li></ul><h3>Closed feedback loop</h3><ul><li>Agent runs compiler, unit tests, and headless browser itself</li><li>Agent sees exact line numbers, console errors, and screenshots</li><li>You inspect only when all checks pass</li></ul><p>Never act as a human copy-paste bridge for errors a machine can read directly.</p><h1>Without a feedback loop, you are the agent&apos;s only pair of eyes.</h1>
+</div>
+<div class="read"><p>When an agent cannot observe its own output, the student becomes a slow manual sensor. Giving the agent direct build, browser, and test feedback lets it iterate and fix regressions before human review.</p>
+</div></section>
+<section id="s04-three-loops"><h2><a href="#s04-three-loops"><span class="no">7</span>Two feedback loops keep `/goal` on track: Ideation first, Verification second.</a></h2>
+<div class="body"><h1>Two feedback loops keep <code>/goal</code> on track: Ideation first, Verification second.</h1>
+<div class="frame fit"><span class="label">Ideation before code &#xb7; Verification during /goal</span><div class="pic"><figure><img src="assets/547e525b0b-diag-two-loops.svg" alt="Two-phase feedback loop diagram contrasting Phase 1 Ideation Loop before code with Phase 2 Verification Loop during /goal execution." loading="lazy"><figcaption>Phase 1 Ideation Loop vs. Phase 2 Verification Loop. Course diagram</figcaption></figure></div></div>
+</div>
+<div class="read"><p>Preventing goal drift requires two complementary loops: an <strong>Ideation Loop</strong> before coding (to align intent and produce <code>docs/plan.md</code>) and a <strong>Verification Loop</strong> during <code>/goal</code> execution (to catch historical, visual, and code regressions).</p>
+</div></section>
+<section id="m1-01-sec"><h2><a href="#m1-01-sec"><span class="no">8</span>Ideation Feedback Loops Before Code</a></h2>
+<div class="body"><h1>Ideation Feedback Loops Before Code</h1>
+<p>Words, Mermaid flowcharts, Excalidraw floor plans, and HTML schematics</p>
+</div>
+<div class="read"><p>Module 1 covers four ideation loops before implementation: verbal restatement in Plan mode, Mermaid state diagrams, agent-drawn Excalidraw floor plans, and HTML architecture schematics.</p>
+</div></section>
+<section id="m1-02-two-ways"><h2><a href="#m1-02-two-ways"><span class="no">9</span>Ideation 1 · Ask the agent to restate scope and open questions before coding.</a></h2>
+<div class="body"><h1>Ideation 1 &#xb7; Ask the agent to restate scope and open questions before coding.</h1>
+<div class="body">
+<div class="term">
+<div class="term-bar"><span>OpenCode &#xb7; Plan mode (Tab)</span></div>
+<pre>
+<span class="you">Do NOT write code yet. Restate the 1987 home computer</span>
+<span class="you">room dimensions, objects, and 3 open questions.</span>
+&#xa0;
+<span class="ok">Scope I understand:</span>
+<span class="blk">&#x2022; Compact 3.5 &#xd7; 3.8 m 1987 Beijing/Shanghai room (not a garage)</span>
+<span class="blk">&#x2022; CEC-I / Apple IIe clone on wooden desk + 14&quot; CRT</span>
+<span class="blk ask">Q1: Does the visitor enter from a corridor or stairwell?</span>
+<span class="blk ask">Q2: Should cassette tape loading play real audio?</span>
+</pre>
+<div class="term-foot">Plan &#xb7; DeepSeek V4.1 Flash &#xb7; high</div>
+</div>
+<div class="frame hot"><span class="label">How to set up verbal ideation</span><div class="text">
+<ul>
+<li>press <strong><code>Tab</code></strong> in OpenCode to switch <code>Build &#x2192; Plan</code> (forbids file edits)</li>
+<li>require <strong>3 uncertainties</strong> so the agent surfaces hidden assumptions instead of guessing silently</li>
+</ul>
+</div></div>
+</div>
+</div>
+<div class="read"><p>Switch OpenCode to <strong>Plan</strong> mode (<code>Tab</code>) and require the agent to restate your design boundaries and ask three clarifying questions before any code is written.</p>
+</div></section>
+<section id="m1-03-diagrams"><h2><a href="#m1-03-diagrams"><span class="no">10</span>Ideation 2 · Have the agent draw a Mermaid state diagram to check logic branches.</a></h2>
+<div class="body"><h1>Ideation 2 &#xb7; Have the agent draw a Mermaid state diagram to check logic branches.</h1>
+<div class="body">
+<div class="frame fit wide"><span class="label">Rendered Mermaid flowchart &#xb7; docs/bow-flow.md</span><div class="pic"><figure><img src="assets/9acc3671a0-diag-mermaid-bow.svg" alt="Rendered Mermaid flowchart of the Bashan bow-deck dialogue with James Talbot, showing the September 1985 cutoff refusal and Trust at least 60 notebook unlock." loading="lazy"><figcaption>Rendered Mermaid flowchart &#xb7; Bashan bow-deck state machine. Course diagram</figcaption></figure></div></div>
+<div class="frame hot"><span class="label">What Mermaid catches</span><div class="text">
+<ul>
+<li><strong>Dead-end states:</strong> every refusal loops back cleanly to <code>Player Question</code></li>
+<li><strong>Gate rules:</strong> <code>Trust &#x2265; 60</code> required before unlocking <code>TOBIN-02</code></li>
+<li><strong>Limit:</strong> shows logic arrows, <strong>not</strong> room scale or floor plans</li>
+</ul>
+</div></div>
+</div>
+</div>
+<div class="read"><p>Ask the agent for a <code>mermaid</code> state flowchart in Markdown to inspect dialogue branches, historical cutoff loops, and unlock conditions visually before implementation.</p>
+</div></section>
+<section id="m1-04-images"><h2><a href="#m1-04-images"><span class="no">11</span>Ideation 3 · The agent draws a full spatial plan onto Excalidraw automatically.</a></h2>
+<div class="body"><h1>Ideation 3 &#xb7; The agent draws a full spatial plan onto Excalidraw automatically.</h1>
+<div class="body">
+<div class="frame fit wide"><span class="label">Agent-drawn Excalidraw canvas &#xb7; Virtual Museum of Chinese Computing (Draft 15)</span><div class="pic"><figure><img src="assets/961b21d8dc-vmocc-draft15-landform.svg" alt="Excalidraw Draft 15 top-down contour plan and 1m=1.8px longitudinal section of the 320-meter Virtual Museum of Chinese Computing." loading="lazy"><figcaption>VMOCC &#xb7; Excalidraw Draft 15 plan &amp; section. Bo An (VMOCC)</figcaption></figure></div></div>
+<div class="frame hot"><span class="label">Agent draws; you co-edit</span><div class="text">
+<ul>
+<li><strong>Not drawn by hand:</strong> the agent calls <code>create_from_svg</code> / <code>batch_create_elements</code> to draw this entire <code>320 m</code> mountain plan + <code>1m = 1.8px</code> section automatically</li>
+<li><strong>Instant spatial check:</strong> contour lines, buried vs. open halls, and USSR / Japan / US link wings</li>
+</ul>
+</div></div>
+</div>
+</div>
+<div class="read"><p>With <code>mcp-excalidraw-server</code>, the agent programmatically generates complex floor plans and elevation sections&#x2014;such as this 320-meter <em>Virtual Museum of Chinese Computing</em> layout&#x2014;directly onto a shared canvas for human review.</p>
+</div></section>
+<section id="m1-05-excalidraw-setup"><h2><a href="#m1-05-excalidraw-setup"><span class="no">12</span>Set up `mcp-excalidraw-server` in two lines to catch misunderstandings in 10s.</a></h2>
+<div class="body"><h1>Set up <code>mcp-excalidraw-server</code> in two lines to catch misunderstandings in 10s.</h1>
+<div class="body">
+<div class="json"><pre>
+{
+  &quot;mcp&quot;: {
+    &quot;excalidraw&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [
+        &quot;npx&quot;, &quot;-y&quot;,
+        <span class="hl">&quot;mcp-excalidraw-server&quot;</span>
+      ],
+      &quot;enabled&quot;: true
+    }
+  }
+}
+// Local canvas: npx -y mcp-excalidraw-server start (:3000)
+// Or official MCP App: https://mcp.excalidraw.com (5.6k&#x2605;)
+</pre></div>
+<div class="frame hot fit"><span class="label">Round 29 &#xb7; Misunderstanding caught in 10s</span><div class="pic"><figure><img src="assets/10533ca6bf-vmocc-round24-hillock.svg" alt="Excalidraw Round 24 spatial layout of the 1989 hillock exhibition halls numbered 1 through 10." loading="lazy"><figcaption>VMOCC &#xb7; Round 24 hillock spaces. Bo An (VMOCC)</figcaption></figure></div></div>
+</div>
+</div>
+<div class="read"><p>Add <code>mcp-excalidraw-server</code> to <code>opencode.json</code> and run <code>npx -y mcp-excalidraw-server start</code> so both you and your agent share <code>http://localhost:3000</code>, catching spatial misunderstandings before 3D or UI coding starts.</p>
+</div></section>
+<section id="m1-06-excalidraw-loop"><h2><a href="#m1-06-excalidraw-loop"><span class="no">13</span>Live demo: edit rooms on Excalidraw and inspect the `get_scene` JSON sent back.</a></h2>
+<div class="body"><h1>Live demo: edit rooms on Excalidraw and inspect the <code>get_scene</code> JSON sent back.</h1>
+<p class="elsewhere">An interactive element appears here on the slide.</p>
+</div>
+<div class="read"><p>Open the embedded Excalidraw editor to switch across <em>VMOCC</em> scenes, move or annotate rooms by hand, and inspect the live <code>get_scene</code> JSON coordinates returned to the agent.</p>
+</div></section>
+<section id="m1-07-visual-compare"><h2><a href="#m1-07-visual-compare"><span class="no">14</span>Ideation 4 · Install an HTML diagram skill for visual project schematics.</a></h2>
+<div class="body"><h1>Ideation 4 &#xb7; Install an HTML diagram skill for visual project schematics.</h1>
+<div class="body">
+<div class="frame fit wide"><span class="label">docs/architecture-explainer.html &#xb7; generated by visual-explainer skill</span><div class="pic"><figure><img src="assets/f0fe758e1d-diag-html-explainer.svg" alt="Self-contained dark-mode HTML architecture explainer page generated by the visual-explainer skill for Bashan 1985." loading="lazy"><figcaption>HTML architecture schematic generated by visual-explainer skill. Course diagram</figcaption></figure></div></div>
+<div class="frame hot"><span class="label">Skill setup &amp; next week&apos;s requirement</span><div class="text">
+<ul>
+<li><strong>Skill:</strong> <code>nicobailon/visual-explainer</code> (self-contained HTML schematic)</li>
+<li><strong>Why HTML:</strong> rich cards, SVG flows, and open-question callouts</li>
+<li><strong>Next week:</strong> show <strong>your own project schematic</strong> from ideation!</li>
+</ul>
+</div></div>
+</div>
+</div>
+<div class="read"><p>Install an HTML schematic skill such as <code>nicobailon/visual-explainer</code> so your agent turns complex plans and data flows into clear, self-contained HTML architecture diagrams&#x2014;one of your required deliverables for next week.</p>
+</div></section>
+<section id="m2-01-sec"><h2><a href="#m2-01-sec"><span class="no">15</span>When two specialist agents work together, let them message each other directly.</a></h2>
+<div class="body"><h1>When two specialist agents work together, let them message each other directly.</h1>
+<p>Moving beyond manual copy-paste between your Research Agent and your Game Agent.</p>
+</div>
+<div class="read"><p>Loop 2 connects specialist agents&#x2014;such as a Research Agent and a Game Implementation Agent&#x2014;so they can ask questions and exchange findings without manual copy-pasting.</p>
+</div></section>
+<section id="m2-02-git-vs-live"><h2><a href="#m2-02-git-vs-live"><span class="no">16</span>Live MCP chat answers source questions mid-task; Git stores the permanent truth.</a></h2>
+<div class="body"><h1>Live MCP chat answers source questions mid-task; Git stores the permanent truth.</h1>
+<div class="frame fit"><span class="label">Two-terminal verification loop &#xb7; Research Agent &#x2194; Builder Agent</span><div class="pic"><figure><img src="assets/2d9b293bad-diag-a2a-bus.svg" alt="Architecture diagram of Terminal 1 Research Agent and Terminal 2 Builder Agent communicating over a live MCP SQLite bus while committing permanent truth to Git." loading="lazy"><figcaption>Live MCP chat bus vs. permanent Git repository truth. Course diagram</figcaption></figure></div></div>
+</div>
+<div class="read"><p>A local MCP chat bus lets the Builder Agent verify historical boundaries with the Research Agent in seconds, while <code>design-document.md</code> and <code>data/bashan-evidence.csv</code> in Git remain the permanent record.</p>
+</div></section>
+<section id="m2-03-mcp-options"><h2><a href="#m2-03-mcp-options"><span class="no">17</span>Three widely used ways to coordinate specialist coding agents.</a></h2>
+<div class="body"><h1>Three widely used ways to coordinate specialist coding agents.</h1>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Option</th>
+<th>How it works</th>
+<th>Best when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>OpenCode Subagents</strong> (<code>.opencode/agents/*.md</code>)</td>
+<td>Built-in <code>@researcher</code> / <code>@reviewer</code> roles invoked inside OpenCode (<code>0</code> plugins)</td>
+<td>One student delegating read-only source checks</td>
+</tr>
+<tr>
+<td><strong><code>Dicklesworthstone/mcp_agent_mail_rust</code></strong> (<code>2.5k&#x2605;</code>)</td>
+<td>Local Git + SQLite MCP mail (<code>send_message</code>, <code>fetch_inbox</code>, advisory file leases)</td>
+<td>Two independent terminals working asynchronously</td>
+</tr>
+<tr>
+<td><strong><code>bcurts/agentchattr</code></strong> (<code>1.6k&#x2605;</code>)</td>
+<td>Local Web UI (<code>:8300</code>) + MCP room; <code>@mention</code> auto-wakes peer terminals</td>
+<td>Live group chat across Claude Code, Codex &amp; OpenCode</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="read"><p>Choose from three active, battle-tested setups: built-in OpenCode subagents (<code>.opencode/agents/researcher.md</code>), <strong>MCP Agent Mail</strong> (<code>Dicklesworthstone/mcp_agent_mail_rust</code>, <code>2.5k&#x2605;</code>) for asynchronous inboxes and file leases, or <strong>agentchattr</strong> (<code>bcurts/agentchattr</code>, <code>1.6k&#x2605;</code>) for live <code>@mention</code> wakeups.</p>
+</div></section>
+<section id="m2-04-mcp-config"><h2><a href="#m2-04-mcp-config"><span class="no">18</span>Set up OpenCode subagents or `mcp-agent-mail` in one config file.</a></h2>
+<div class="body"><h1>Set up OpenCode subagents or <code>mcp-agent-mail</code> in one config file.</h1>
+<div class="body">
+<div class="file"><div class="file-bar">.opencode/agents/researcher.md (zero-install subagent)</div><pre>
+<span class="dim">---</span>
+description: Verify claims strictly against materials/ &amp; refs.bib
+mode: subagent
+permission:
+  edit: deny
+<span class="dim">---</span>
+Answer historical source questions with exact page numbers.
+Never edit game code.
+</pre></div>
+<div class="json"><pre>
+{
+  &quot;&#x24;schema&quot;: &quot;https://opencode.ai/config.json&quot;,
+  &quot;mcp&quot;: {
+    &quot;agent_mail&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: <span class="hl">&quot;http://127.0.0.1:8765/mcp/&quot;</span>,
+      &quot;enabled&quot;: true
+    }
+  }
+}
+// Terminal: mcp-agent-mail serve (auto-configured by am)
+</pre></div>
+</div>
+</div>
+<div class="read"><p>For single-window delegation, drop a read-only subagent Markdown file in <code>.opencode/agents/researcher.md</code> and invoke <code>@researcher</code>; for multi-terminal coordination, point <code>opencode.json</code> at a local <code>mcp-agent-mail</code> server (<code>http://127.0.0.1:8765/mcp/</code>).</p>
+</div></section>
+<section id="m2-05-bashan-a2a"><h2><a href="#m2-05-bashan-a2a"><span class="no">19</span>In Bashan, the Game Agent verifies a source boundary before writing dialogue.</a></h2>
+<div class="body"><h1>In Bashan, the Game Agent verifies a source boundary before writing dialogue.</h1>
+<div class="body">
+<div class="term">
+<div class="term-bar"><span>Terminal 2 &#xb7; builder</span></div>
+<pre>
+<span class="tool">&#x25cf; agent_mail.send_message</span>   to: <span class="hl">researcher</span>
+<span class="blk">&quot;Can Talbot cite Kornai&apos;s &apos;investment hunger&apos; on the bow deck, or is that Kornai&apos;s own paper?&quot;</span>
+&#xa0;
+<span class="tool">&#x25cf; agent_mail.fetch_inbox</span>    from: <span class="hl">researcher</span>
+<span class="blk">&quot;Do NOT put &apos;investment hunger&apos; in Talbot&apos;s mouth. Tobin pp. 152&#x2013;158 argues credit &amp; statistical preconditions; Kornai speaks separately.&quot;</span>
+&#xa0;
+<span class="tool">&#x2190; Edit</span> game/people/expert-1.json
+<span class="ok">&#x2713; Kept Talbot strictly on Tobin pp. 152&#x2013;158</span>
+</pre>
+<div class="term-foot">Build &#xb7; DeepSeek V4.1 Flash &#xb7; high</div>
+</div>
+<div class="frame"><span class="label">Why this beats one giant session</span><div class="text">
+<ul>
+<li><code>builder</code> never pollutes its context with 200 pages of Chinese PDFs</li>
+<li><code>researcher</code> guards historical accuracy full-time</li>
+<li>prevents <strong>character conflation</strong> (mixing Tobin <sup class="n"><a href="#ref-tobin1986macro" title="James Tobin, &#x201c;&#x7565;&#x8bba;&#x975e;&#x96c6;&#x4e2d;&#x578b;&#x7ecf;&#x6d4e;&#x7684;&#x5b8f;&#x89c2;&#x63a7;&#x5236;,&#x201d; in &#x5b8f;&#x89c2;&#x7ecf;&#x6d4e;&#x7684;&#x7ba1;&#x7406;&#x4e0e;&#x6539;&#x9769;, ed. &#x4e2d;&#x56fd;&#x7ecf;&#x6d4e;&#x4f53;&#x5236;&#x6539;&#x9769;&#x7814;&#x7a76;&#x4f1a;, trans. &#x6768;&#x4eac;&#x5e73; (&#x7ecf;&#x6d4e;&#x65e5;&#x62a5;&#x51fa;&#x7248;&#x793e;, 1986).">1</a></sup> with Kornai <sup class="n"><a href="#ref-kornai2006force" title="J&#xe1;nos Kornai, By Force of Thought: Irregular Memoirs of an Intellectual Journey (MIT Press, 2006).">2</a></sup>)</li>
+</ul>
+</div></div>
+</div>
+</div>
+<div class="read"><p>When the Game Agent asks the Research Agent whether James Talbot can mention &quot;investment hunger,&quot; the Research Agent checks Tobin&apos;s 1986 text and blocks conflating Tobin&apos;s argument with J&#xe1;nos Kornai&apos;s.</p>
+</div></section>
+<section id="m2-06-truth-in-files"><h2><a href="#m2-06-truth-in-files"><span class="no">20</span>Chat messages coordinate work; repository files remain the source of truth.</a></h2>
+<div class="body"><h1>Chat messages coordinate work; repository files remain the source of truth.</h1>
+<p><strong>warning</strong></p><div>Never leave an agreed historical boundary only inside chat history. Every verified answer must also land in <code>data/bashan-evidence.csv</code> or <code>design-document.md</code>.</div>
+<div class="tree"><span class="label">bashan/</span><pre>
+&#x251c;&#x2500; .agent-mail/               <span class="dim">ephemeral inbox threads &amp; file leases (coordination)</span>
+&#x251c;&#x2500; design-document.md         <span class="hl">permanent scene &amp; boundary spec (committed)</span>
+&#x251c;&#x2500; data/bashan-evidence.csv   <span class="hl">permanent claim &#xb7; page &#xb7; &#x636e;/&#x63a8;&#x65ad;/&#x8bbe; table (committed)</span>
+&#x2514;&#x2500; game/people/expert-1.json  <span class="hl">character card checked against CSV (committed)</span>
+</pre></div>
+</div>
+<div class="read"><p>Inter-agent chat is only for transient coordination; every evidentiary decision must still be committed to <code>design-document.md</code> and <code>data/bashan-evidence.csv</code> so tests and future sessions can enforce it.</p>
+</div></section>
+<section id="m3-01-sec"><h2><a href="#m3-01-sec"><span class="no">21</span>Give the agent its own eyes through the browser, the compiler, and automated tests.</a></h2>
+<div class="body"><h1>Give the agent its own eyes through the browser, the compiler, and automated tests.</h1>
+<p>How an agent inspects its own running work without waiting for you.</p>
+</div>
+<div class="read"><p>Loop 3 equips the coding agent to verify its own work directly via browser inspection, static build/compile checks, and automated test suites.</p>
+</div></section>
+<section id="m3-02-agent-eyes"><h2><a href="#m3-02-agent-eyes"><span class="no">22</span>An agent checks cheap static errors first, then live browser state, then full tests.</a></h2>
+<div class="body"><ul><li>01 · Compile / Build: Syntax &amp; types: py_compile, ruff, mypy, tsc (&lt; 0.2s)</li><li>02 · Browser View: DOM, console &amp; pixels: Playwright / Chrome DevTools MCP (~1s)</li><li>03 · Test Suite: Unit · Integration · E2E: pytest, Vitest, Playwright (~2s)</li></ul><h1>An agent checks cheap static errors first, then live browser state, then full tests.</h1>
+</div>
+<div class="read"><p>A fast agent feedback loop layers three checks from cheapest to richest: static compile/type checks in milliseconds, browser inspection in one second, and full automated tests in two seconds.</p>
+</div></section>
+<section id="m3-03-how-browser-sees"><h2><a href="#m3-03-how-browser-sees"><span class="no">23</span>Browser MCP turns invisible UI bugs into four machine-readable signals.</a></h2>
+<div class="body"><h1>Browser MCP turns invisible UI bugs into four machine-readable signals.</h1>
+<div class="body">
+<div class="browser">
+<div class="browser-bar"><span class="url">http://localhost:3090/bow-deck &#xb7; 3 bugs on screen</span></div>
+<div class="browser-body">
+<h3>James Talbot &#xb7; Bow Deck (Sep 1985)</h3>
+<p>[404 Broken Image: /people/tobin.jpg]</p>
+<p>&#x201c;Indirect levers&#x2014;interest rates and reserve requirements&#x2014;only work when commercial banks&#x2026;&#x201d; <b>[Text clipped at 92px! Button overlapping!]</b></p>
+<p><span class="del">Console TypeError: Cannot read properties of null (&apos;addEventListener&apos;)</span></p>
+</div>
+</div>
+<div class="frame hot"><span class="label">What @playwright/mcp sees at once</span><div class="text">
+<ol>
+<li><strong>DOM geometry:</strong> <code>scrollHeight (148) &gt; clientHeight (92)</code> &#x2192; clipped!</li>
+<li><strong>Console errors:</strong> <code>TypeError</code> at <code>bow-deck.js:42</code></li>
+<li><strong>Network log:</strong> <code>404</code> on <code>/people/tobin.jpg</code></li>
+<li><strong>Screenshot:</strong> vision check at <code>1280&#xd7;720</code></li>
+</ol>
+</div></div>
+</div>
+</div>
+<div class="read"><p>Connecting <code>@playwright/mcp</code> gives the agent simultaneous access to clipped DOM dimensions (<code>scrollHeight &gt; clientHeight</code>), JavaScript console exceptions, <code>404</code> network requests, and <code>1280&#xd7;720</code> screenshots.</p>
+</div></section>
+<section id="m3-04-browser-mcp-setup"><h2><a href="#m3-04-browser-mcp-setup"><span class="no">24</span>Browser feedback setup: two commands + one `opencode.json` block.</a></h2>
+<div class="body"><h1>Browser feedback setup: two commands + one <code>opencode.json</code> block.</h1>
+<div class="body">
+<div class="term">
+<div class="term-bar"><span>Step 1 &#xb7; Install Chromium once</span></div>
+<pre>
+<span class="blk">&#x24; npx playwright install chromium</span>
+<span class="ok">&#x2713; Chromium downloaded for headless &amp; MCP runs</span>
+&#xa0;
+<span class="you">&#x203a; Start my local dev server in the background, open it</span>
+<span class="you">  with playwright MCP, click through the main flow,</span>
+<span class="you">  and fix any console, 404, or layout overflow errors.</span>
+</pre>
+<div class="term-foot">Build &#xb7; DeepSeek V4.1 Flash &#xb7; high</div>
+</div>
+<div class="json"><pre>
+{
+  &quot;&#x24;schema&quot;: &quot;https://opencode.ai/config.json&quot;,
+  &quot;mcp&quot;: {
+    &quot;playwright&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [
+        &quot;npx&quot;, &quot;-y&quot;,
+        <span class="hl">&quot;@playwright/mcp@latest&quot;</span>,
+        &quot;--headless&quot;
+      ],
+      &quot;enabled&quot;: true
+    }
+  }
+}
+</pre></div>
+</div>
+</div>
+<div class="read"><p>To set up automatic browser feedback: run <code>npx playwright install chromium</code> once, add <code>@playwright/mcp@latest</code> to <code>opencode.json</code>, and instruct OpenCode to open your local server and fix all console, <code>404</code>, and overflow errors.</p>
+</div></section>
+<section id="m3-05-explore-vs-test"><h2><a href="#m3-05-explore-vs-test"><span class="no">25</span>Distinguish live browser exploration from repeatable browser test feedback.</a></h2>
+<div class="body"><h3>Exploratory browser feedback</h3><ul><li>Agent opens browser interactively via MCP while building a new feature</li><li>Clicks around, inspects layout, tweaks CSS colours and spacing live</li><li>Ephemeral — vanishes once the chat turn ends</li></ul><h3>Test browser feedback</h3><ul><li>Agent saves those exact browser checks into tests/bow-smoke.spec.ts</li><li>Asserts 0 console errors, 0 broken 404s, and no text clipping</li><li>Permanent — re-runs in 2 seconds after every future edit</li></ul><p>Use exploratory browser feedback to design; lock the result into test feedback so tomorrow's edit cannot break today's scene.</p><h1>Distinguish live browser exploration from repeatable browser test feedback.</h1>
+</div>
+<div class="read"><p>Interactive browser MCP exploration helps build and polish a UI once, whereas saved Playwright browser tests permanently guard against regressions on every subsequent edit.</p>
+</div></section>
+<section id="m3-06-bashan-browser-run"><h2><a href="#m3-06-bashan-browser-run"><span class="no">26</span>Browser MCP catches a missing Bashan JSON path and fixes it in one turn.</a></h2>
+<div class="body"><h1>Browser MCP catches a missing Bashan JSON path and fixes it in one turn.</h1>
+<div class="term">
+<div class="term-bar"><span>OpenCode &#xb7; bashan</span></div>
+<pre>
+<span class="you">&#x203a; Open http://localhost:3090 in Playwright MCP, click Talbot, and check console.</span>
+&#xa0;
+<span class="tool">&#x25cf; browser_navigate</span>  http://localhost:3090
+<span class="tool">&#x25cf; browser_click</span>     ref=&quot;npc-talbot&quot;
+<span class="tool">&#x25cf; browser_console</span>   <span class="del">404 /people/expert-1.json (missing /game/)</span>
+<span class="tool">&#x2190; Edit</span> src/loader.js  <span class="add">fetch(&apos;./game/people/expert-1.json&apos;)</span>
+<span class="tool">&#x25cf; browser_snapshot</span>  <span class="ok">0 errors &#xb7; dialogue box 620&#xd7;184px</span>
+<span class="ok">&#x2713; Bow-deck dialogue loads Talbot&apos;s card cleanly</span>
+</pre>
+<div class="term-foot">Build &#xb7; DeepSeek V4.1 Flash &#xb7; high</div>
+</div>
+</div>
+<div class="read"><p>When OpenCode opens the Bashan bow-deck scene via Playwright MCP, it immediately spots a <code>404</code> path error on <code>expert-1.json</code> in the browser console, patches <code>src/loader.js</code>, and verifies zero errors on reload.</p>
+</div></section>
+<section id="m3-08-python-compile"><h2><a href="#m3-08-python-compile"><span class="no">27</span>Stack four fast Python gates so syntax and type errors die in `0.15s`.</a></h2>
+<div class="body"><h1>Stack four fast Python gates so syntax and type errors die in <code>0.15s</code>.</h1>
+<div class="route">
+<div class="step"><p class="what">1 &#xb7; compileall</p><p class="how">syntax check</p></div>
+<div class="arrow">&#x2192;</div>
+<div class="step"><p class="what">2 &#xb7; ruff check</p><p class="how">undefined names</p></div>
+<div class="arrow">&#x2192;</div>
+<div class="step"><p class="what">3 &#xb7; mypy</p><p class="how">None &amp; dict types</p></div>
+<div class="arrow">&#x2192;</div>
+<div class="step red"><p class="what">4 &#xb7; pytest -q</p><p class="how">unit &amp; API rules</p></div>
+</div>
+<div class="term">
+<div class="term-bar"><span>Terminal &#xb7; install &amp; run all 4 gates in one command</span></div>
+<pre>
+<span class="blk">&#x24; uv add --dev ruff mypy pytest fastapi httpx</span>
+<span class="blk">&#x24; python3 -m compileall -q src &amp;&amp; uv run ruff check . &amp;&amp; uv run mypy src &amp;&amp; uv run pytest -q</span>
+<span class="ok">&#x2713; All checks passed in 0.18s</span>
+</pre>
+</div>
+</div>
+<div class="read"><p>Install <code>ruff</code>, <code>mypy</code>, and <code>pytest</code> (<code>uv add --dev ruff mypy pytest</code>) and chain <code>compileall &#x2192; ruff &#x2192; mypy &#x2192; pytest</code> as a single <code>0.18s</code> verification command inside OpenCode.</p>
+</div></section>
+<section id="m3-09-python-opencode-run"><h2><a href="#m3-09-python-opencode-run"><span class="no">28</span>Watch the Python check loop catch a wrong Bashan field name in 0.1 seconds.</a></h2>
+<div class="body"><h1>Watch the Python check loop catch a wrong Bashan field name in 0.1 seconds.</h1>
+<div class="term">
+<div class="term-bar"><span>OpenCode &#xb7; bashan-backend</span></div>
+<pre>
+<span class="blk">&#x24; python3 -m compileall -q src/ &amp;&amp; ruff check src/ &amp;&amp; mypy --strict src/</span>
+<span class="del">src/loader.py:24: error: TypedDict &quot;ResearchMeta&quot; has no key &quot;evidence_tier&quot; (did you mean &quot;evidenceLevel&quot;?) [typeddict-item]</span>
+<span class="del">Found 1 error in 1 file (checked 7 source files in 0.11s)</span>
+&#xa0;
+<span class="tool">&#x2190; Edit</span> src/loader.py  <span class="dim">evidence_tier &#x2192; evidenceLevel</span>
+<span class="blk">&#x24; python3 -m compileall -q src/ &amp;&amp; ruff check src/ &amp;&amp; mypy --strict src/</span>
+<span class="ok">All checks passed!</span>
+<span class="ok">Success: no issues found in 7 source files (0.10s)</span>
+</pre>
+<div class="term-foot">Build &#xb7; DeepSeek V4.1 Flash &#xb7; 0.10s</div>
+</div>
+</div>
+<div class="read"><p>Running <code>compileall</code>, <code>ruff</code>, and <code>mypy</code> catches hallucinated field names like <code>evidence_tier</code> vs <code>evidenceLevel</code> in <code>0.11s</code>, letting a fast model self-correct immediately.</p>
+</div></section>
+<section id="m3-10-frontend-engine-build"><h2><a href="#m3-10-frontend-engine-build"><span class="no">29</span>Every stack in our class has a single one-line build gate for AGENTS.md.</a></h2>
+<div class="body"><h1>Every stack in our class has a single one-line build gate for <a href="http://AGENTS.md">AGENTS.md</a>.</h1>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Project stack</th>
+<th>Exact build / compile command to put in <code>AGENTS.md</code></th>
+<th>Speed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Python backend / scripts</strong></td>
+<td><code>python3 -m compileall -q . &amp;&amp; ruff check . &amp;&amp; mypy src/</code></td>
+<td><code>~0.15s</code></td>
+</tr>
+<tr>
+<td><strong>TypeScript / React / Vite web</strong></td>
+<td><code>npx tsc --noEmit &amp;&amp; npm run build</code></td>
+<td><code>~1.5s</code></td>
+</tr>
+<tr>
+<td><strong>Reslides deck / academic site</strong></td>
+<td><code>npm run check</code> (validates JSX, <code>refs.bib</code>, <code>figures.yaml</code>, timing)</td>
+<td><code>~2.0s</code></td>
+</tr>
+<tr>
+<td><strong>Godot 4 game</strong></td>
+<td><code>godot --headless --check-only --script res://scripts/main.gd</code></td>
+<td><code>~0.8s</code></td>
+</tr>
+<tr>
+<td><strong>Unity 3D (<em>Bashan</em>)</strong></td>
+<td><code>Unity -batchmode -nographics -quit -projectPath . -logFile -</code></td>
+<td><code>~6&#x2013;12s</code></td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="read"><p>Every project stack&#x2014;Python, TypeScript/Vite, Reslides, Godot, and Unity&#x2014;provides a CLI compile/build gate that should be mandated in <code>AGENTS.md</code>.</p>
+</div></section>
+<section id="m4-01-sec"><h2><a href="#m4-01-sec"><span class="no">30</span>Compile checks prove code parses; tests prove your historical design still works.</a></h2>
+<div class="body"><h1>Compile checks prove code parses; tests prove your historical design still works.</h1>
+<p>Unit testing, integration testing, and end-to-end testing walked step by step on <em>Bashan</em>.</p>
+</div>
+<div class="read"><p>Module 4 distinguishes unit tests, integration tests, and end-to-end (E2E) tests, applying all three step by step to the 1985 <em>Bashan</em> shipboard conference project.</p>
+</div></section>
+<section id="m4-02-three-test-levels"><h2><a href="#m4-02-three-test-levels"><span class="no">31</span>Where Unit, Integration, and End-to-End tests sit inside *Bashan*.</a></h2>
+<div class="body"><h1>Where Unit, Integration, and End-to-End tests sit inside <em>Bashan</em>.</h1>
+<div class="frame fit"><span class="label">Three automated test layers guarding Bashan</span><div class="pic"><figure><img src="assets/96d475d03c-diag-test-pyramid.svg" alt="Nested diagram of Level 1 Unit Test, Level 2 Integration Test, and Level 3 Playwright E2E Test inside Bashan." loading="lazy"><figcaption>Three automated test levels mapped onto Bashan. Course diagram</figcaption></figure></div></div>
+</div>
+<div class="read"><p>Unit tests check isolated rules (<code>&lt;0.05s</code>), integration tests verify cross-file and API contracts (<code>~0.3s</code>), and Playwright E2E tests verify the real browser UI (<code>~2.0s</code>).</p>
+</div></section>
+<section id="m4-03b-test-setup"><h2><a href="#m4-03b-test-setup"><span class="no">32</span>Testing setup from scratch: install `Vitest` / `pytest` + `Playwright` in 60 seconds.</a></h2>
+<div class="body"><h1>Testing setup from scratch: install <code>Vitest</code> / <code>pytest</code> + <code>Playwright</code> in 60 seconds.</h1>
+<div class="body">
+<div class="term">
+<div class="term-bar"><span>Web / JS Game (Vitest + Playwright)</span></div>
+<pre>
+<span class="blk">&#x24; npm init -y</span>
+<span class="blk">&#x24; npm i -D vitest @playwright/test</span>
+<span class="blk">&#x24; npx playwright install chromium</span>
+&#xa0;
+<span class="dim"># Run unit + integration tests (0.2s):</span>
+<span class="blk">&#x24; npx vitest run</span>
+<span class="dim"># Run headless browser E2E tests (2s):</span>
+<span class="blk">&#x24; npx playwright test</span>
+</pre>
+<div class="term-foot">package.json: &quot;test&quot;: &quot;vitest run &amp;&amp; playwright test&quot;</div>
+</div>
+<div class="term">
+<div class="term-bar"><span>Python Backend + Web (pytest + Playwright)</span></div>
+<pre>
+<span class="blk">&#x24; uv init &amp;&amp; uv add --dev pytest httpx</span>
+<span class="blk">&#x24; npm i -D @playwright/test</span>
+<span class="blk">&#x24; npx playwright install chromium</span>
+&#xa0;
+<span class="dim"># Run Python unit + FastAPI tests:</span>
+<span class="blk">&#x24; uv run pytest -q</span>
+<span class="dim"># Run headless browser E2E tests:</span>
+<span class="blk">&#x24; npx playwright test</span>
+</pre>
+<div class="term-foot">Unity / Godot: test JSON with pytest + export WebGL</div>
+</div>
+</div>
+</div>
+<div class="read"><p>Initialize automated testing in one minute: install <code>vitest</code> (or <code>pytest</code> + <code>httpx</code>) for unit and integration checks alongside <code>@playwright/test</code> (<code>npx playwright install chromium</code>) for headless browser verification.</p>
+</div></section>
+<section id="m4-03-decouple-tree"><h2><a href="#m4-03-decouple-tree"><span class="no">33</span>Separate data and pure logic from the UI so all three test levels stay easy.</a></h2>
+<div class="body"><h1>Separate data and pure logic from the UI so all three test levels stay easy.</h1>
+<div class="body">
+<div class="tree"><span class="label">bashan/</span><pre>
+&#x251c;&#x2500; data/bashan-evidence.csv  <span class="dim">claims &amp; pages</span>
+&#x251c;&#x2500; game/people/expert-1.json <span class="dim">Talbot&apos;s card</span>
+&#x251c;&#x2500; src/dialogue_rules.py     <span class="hl">pure logic (0.05s)</span>
+&#x251c;&#x2500; src/server.py             <span class="hl">API route</span>
+&#x2514;&#x2500; tests/
+   &#x251c;&#x2500; test_unit.py           <span class="hl">01 &#xb7; unit</span>
+   &#x251c;&#x2500; test_integration.py    <span class="hl">02 &#xb7; integration</span>
+   &#x2514;&#x2500; e2e_bow_deck.spec.ts   <span class="hl">03 &#xb7; browser E2E</span>
+</pre></div>
+<div class="frame hot"><span class="label">Golden rule</span><div class="text">
+<ul>
+<li><strong>never</strong> bury dialogue trees and year cutoffs inside a 2,000-line <code>index.html</code> script</li>
+<li>keep rules in <code>src/</code> and historical facts in <code>.json</code> / <code>.csv</code></li>
+</ul>
+</div></div>
+</div>
+</div>
+<div class="read"><p>Keeping historical evidence in CSV/JSON files and dialogue rules in standalone modules&#x2014;separate from HTML/Canvas rendering&#x2014;makes unit, integration, and E2E tests clean and fast.</p>
+</div></section>
+<section id="m4-04-unit-concept"><h2><a href="#m4-04-unit-concept"><span class="no">34</span>Level 1 · Unit tests check single rules and records with zero external dependencies.</a></h2>
+<div class="body"><h1>Level 1 &#xb7; Unit tests check single rules and records with zero external dependencies.</h1>
+<div class="rows">
+<div class="row"><span class="label">No network</span><p class="plain">Never calls OpenRouter or starts an HTTP server; runs offline in under 0.1 seconds</p></div>
+<div class="row"><span class="label">Pure input &#x2192; output</span><p class="plain">Calls one function such as <code>violates_1985_cutoff(prompt)</code> and asserts the exact boolean return</p></div>
+<div class="row hot"><span class="label">Historical guardrails</span><p class="plain">Checks every character JSON for <code>&#x636e; / &#x63a8;&#x65ad; / &#x8bbe;</code> tags and a boundary section</p></div>
+</div>
+</div>
+<div class="read"><p>Unit tests run offline in under <code>0.1s</code> with no servers or API calls, checking pure functions such as anachronism filters and character schema rules.</p>
+</div></section>
+<section id="m4-05-bashan-expert-json"><h2><a href="#m4-05-bashan-expert-json"><span class="no">35</span>Inspect the real Bashan character record that our unit test protects.</a></h2>
+<div class="body"><h1>Inspect the real Bashan character record that our unit test protects.</h1>
+<div class="json"><pre>
+{
+  &quot;id&quot;: &quot;expert-1&quot;,
+  &quot;name&quot;: &quot;James Talbot&quot;,
+  &quot;stance&quot;: {
+    &quot;positions&quot;: [{
+      &quot;id&quot;: &quot;expert-1:Positions:Credit and institutions&quot;,
+      &quot;provenance&quot;: { &quot;how&quot;: &quot;own&quot;, &quot;strength&quot;: 0.8, &quot;when&quot;: <span class="hl">&quot;September 1985&quot;</span> },
+      &quot;research&quot;: {
+        &quot;evidenceLevel&quot;: <span class="hl">&quot;&#x636e;&quot;</span>,
+        &quot;ref&quot;: <span class="hl">&quot;&#x300a;&#x5b8f;&#x89c2;&#x7ecf;&#x6d4e;&#x7684;&#x7ba1;&#x7406;&#x4e0e;&#x6539;&#x9769;&#x300b;&#xff08;1986&#xff09;&#xff0c;&#x6258;&#x5bbe;&#xff0c;pp.152&#x3001;157&#x2013;158&quot;</span>
+      }
+    }]
+  },
+  &quot;persona&quot;: <span class="hl">&quot;## What you do not know\n- You cannot know events that have not happened...&quot;</span>
+}
+</pre></div>
+</div>
+<div class="read"><p>James Talbot&apos;s real <code>expert-1.json</code> record in <em>Bashan</em> encodes a September 1985 timestamp, an epistemic level (<code>&#x636e;</code>), exact page locators (<code>pp. 152, 157&#x2013;158</code>), and a <code>## What you do not know</code> section.</p>
+</div></section>
+<section id="m4-06-bashan-unit-code"><h2><a href="#m4-06-bashan-unit-code"><span class="no">36</span>Write pure unit tests for Bashan's cutoff rule and character schema.</a></h2>
+<div class="body"><h1>Write pure unit tests for Bashan&apos;s cutoff rule and character schema.</h1>
+<pre><code class="language-python"># tests/test_unit.py &#x2014; Run with: pytest tests/test_unit.py -q
+import json, pathlib
+from src.dialogue_rules import violates_1985_cutoff, select_topic_cards
+
+def test_1985_cutoff_blocks_future_events():
+    assert violates_1985_cutoff(&quot;What did Deng say on his 1992 Southern Tour?&quot;) is True
+    assert violates_1985_cutoff(&quot;How should China control credit in winter 1985?&quot;) is False
+
+def test_expert_card_has_epistemic_levels_and_unknowns():
+    card = json.loads(pathlib.Path(&quot;game/people/expert-1.json&quot;).read_text())
+    assert &quot;## What you do not know&quot; in card[&quot;persona&quot;]
+    for pos in card[&quot;stance&quot;][&quot;positions&quot;]:
+        assert pos[&quot;research&quot;][&quot;evidenceLevel&quot;] in {&quot;&#x636e;&quot;, &quot;&#x63a8;&#x65ad;&quot;, &quot;&#x8bbe;&quot;}
+        assert len(pos[&quot;research&quot;][&quot;ref&quot;]) &gt; 0
+
+def test_credit_query_selects_tobin_institutions_position():
+    card = json.loads(pathlib.Path(&quot;game/people/expert-1.json&quot;).read_text())
+    hits = select_topic_cards(card, query=&quot;interest rates and credit volume&quot;)
+    assert hits[0][&quot;id&quot;] == &quot;expert-1:Positions:Credit and institutions&quot;
+</code></pre>
+</div>
+<div class="read"><p>Three unit tests in <code>tests/test_unit.py</code> verify the 1985 anachronism filter, the presence of epistemic tiers and <code>## What you do not know</code> in <code>expert-1.json</code>, and deterministic topic-card matching.</p>
+</div></section>
+<section id="m4-07-bashan-unit-run"><h2><a href="#m4-07-bashan-unit-run"><span class="no">37</span>Unit tests fail with exact pinpointing when an agent drops a citation.</a></h2>
+<div class="body"><h1>Unit tests fail with exact pinpointing when an agent drops a citation.</h1>
+<div class="term">
+<div class="term-bar"><span>OpenCode &#xb7; bashan</span></div>
+<pre>
+<span class="blk">&#x24; pytest tests/test_unit.py -q</span>
+<span class="del">F..                                                                 [100%]</span>
+<span class="del">E   AssertionError: economist-1.json position[2] has empty research.ref</span>
+<span class="dim">1 failed, 2 passed in 0.08s</span>
+&#xa0;
+<span class="tool">&#x2192; Read</span> materials/annotations/secondary-weber-gewirtz.md
+<span class="tool">&#x2190; Edit</span> game/people/economist-1.json  <span class="add">&quot;ref&quot;: &quot;Weber 2021, p. 195; &#x9879;&#x6000;&#x8bda;&#x81ea;&#x8ff0; P6, P11&quot;</span>
+<span class="blk">&#x24; pytest tests/test_unit.py -q</span>
+<span class="ok">...                                                                 [100%]</span>
+<span class="ok">3 passed in 0.07s</span>
+</pre>
+<div class="term-foot">Build &#xb7; DeepSeek V4.1 Flash &#xb7; 0.07s</div>
+</div>
+</div>
+<div class="read"><p>When an edit leaves <code>research.ref</code> blank on a new character position, <code>pytest</code> catches it in <code>0.08s</code> and forces the agent to restore the exact source locator from the research notes.</p>
+</div></section>
+<section id="m4-08-integration-concept"><h2><a href="#m4-08-integration-concept"><span class="no">38</span>Level 2 · Integration tests verify that separate modules agree at their seams.</a></h2>
+<div class="body"><h1>Level 2 &#xb7; Integration tests verify that separate modules agree at their seams.</h1>
+<div class="route">
+<div class="step"><span class="yr">Module A</span><p class="what">bashan-evidence.csv</p><p class="how">researcher&apos;s claim &amp; page table</p></div>
+<div class="arrow">&#x2194;</div>
+<div class="step"><span class="yr">Module B</span><p class="what">expert-1.json + world.json</p><p class="how">character cards &amp; scene anchors</p></div>
+<div class="arrow">&#x2194;</div>
+<div class="step red"><span class="yr">Module C</span><p class="what">POST /api/chat</p><p class="how">prompt builder &amp; JSON response</p></div>
+</div>
+<p class="sub">Each file can pass unit tests alone and still break where two files meet.</p>
+</div>
+<div class="read"><p>Integration tests verify the seams between modules&#x2014;ensuring <code>data/bashan-evidence.csv</code>, character/scene JSON files, and the <code>/api/chat</code> backend agree on IDs, locators, and response shapes.</p>
+</div></section>
+<section id="m4-09-bashan-evidence-table"><h2><a href="#m4-09-bashan-evidence-table"><span class="no">39</span>Integration starts from the shared Bashan evidence table.</a></h2>
+<div class="body"><h1>Integration starts from the shared Bashan evidence table.</h1>
+<div class="table-wrap"><table><caption>data/bashan-evidence.csv &#x2014; single source of truth across research, game JSON, and paper</caption><thead><tr><th>Claim</th><th>Evidence</th><th>Locator</th><th>Level</th><th>Limit</th></tr></thead><tbody><tr><td>Tobin: macro instruments need institutions</td><td>&#x4f1a;&#x8bae;&#x9009;&#x7f16; 1986</td><td>pp. 152, 157-158</td><td>&#x636e;</td><td>Chinese reply not recorded</td></tr><tr><td>Fiscal official asks about winter credit &amp; prices</td><td>Weber 2021 / &#x9879;&#x6000;&#x8bda;&#x81ea;&#x8ff0;</td><td>p. 195 / P6, P11</td><td>&#x63a8;&#x65ad;</td><td>Later memoir, not 1985 transcript</td></tr><tr><td>Talbot &amp; Cheng meet on bow deck at Wushan</td><td>world.json / expert-1.json</td><td>bashan-anchor</td><td>&#x8bbe;</td><td>Setting sourced; encounter invented</td></tr></tbody></table></div>
+</div>
+<div class="read"><p><code>data/bashan-evidence.csv</code> serves as the shared contract across research notes, game JSON records, and the paper; integration tests verify every cross-file reference against this table.</p>
+</div></section>
+<section id="m4-10-bashan-integration-code"><h2><a href="#m4-10-bashan-integration-code"><span class="no">40</span>Test CSV cross-references and the /api/chat endpoint together in 0.4s.</a></h2>
+<div class="body"><h1>Test CSV cross-references and the /api/chat endpoint together in 0.4s.</h1>
+<pre><code class="language-python"># tests/test_integration.py &#x2014; FastAPI TestClient (no browser needed)
+import csv, json
+from fastapi.testclient import TestClient
+from src.server import app
+
+client = TestClient(app)
+
+def test_evidence_csv_anchors_exist_in_world_and_people():
+    world = json.load(open(&quot;game/world.json&quot;))
+    expert = json.load(open(&quot;game/people/expert-1.json&quot;))
+    rows = list(csv.DictReader(open(&quot;data/bashan-evidence.csv&quot;)))
+    assert any(&quot;152&quot; in p[&quot;research&quot;][&quot;ref&quot;] for p in expert[&quot;stance&quot;][&quot;positions&quot;])
+    assert rows[2][&quot;locator&quot;] in world[&quot;zones&quot;]  # &quot;bashan-anchor&quot; must exist!
+
+def test_chat_endpoint_returns_reply_and_source_tier():
+    res = client.post(&quot;/api/chat&quot;, json={
+        &quot;npcId&quot;: &quot;expert-1&quot;, &quot;zone&quot;: &quot;bashan-anchor&quot;,
+        &quot;message&quot;: &quot;Can China just copy a Western money-supply target?&quot;
+    })
+    assert res.status_code == 200
+    body = res.json()
+    assert body[&quot;evidenceLevel&quot;] in {&quot;&#x636e;&quot;, &quot;&#x63a8;&#x65ad;&quot;, &quot;&#x8bbe;&quot;} and &quot;institutions&quot; in body[&quot;reply&quot;].lower()
+</code></pre>
+</div>
+<div class="read"><p><code>tests/test_integration.py</code> verifies both cross-file referential integrity (<code>bashan-evidence.csv</code> &#x2194; <code>world.json</code> &#x2194; <code>expert-1.json</code>) and the <code>/api/chat</code> HTTP contract via <code>TestClient</code>.</p>
+</div></section>
+<section id="m4-11-llm-judge-drift"><h2><a href="#m4-11-llm-judge-drift"><span class="no">41</span>Add an LLM-as-a-Judge audit test when dialogue prompts risk purpose drift.</a></h2>
+<div class="body"><h1>Add an LLM-as-a-Judge audit test when dialogue prompts risk purpose drift.</h1>
+<div class="body">
+<div class="file"><div class="file-bar">tests/audit-rubric.md &#xb7; Judge prompt</div><pre>
+Given saved chat log `logs/bow-session.jsonl`
+and `data/bashan-evidence.csv`:
+1. Did Talbot stay on <span class="hl">institutional preconditions</span>
+   instead of drifting into dual-track pricing?
+2. Did Talbot refuse post-Sep 1985 facts?
+Return JSON: `{&quot;pass&quot;: bool, &quot;reason&quot;: str}`
+</pre></div>
+<div class="frame hot"><span class="label">Why deterministic + LLM judge</span><div class="text">
+<ul>
+<li><strong>deterministic code</strong> checks file paths, HTTP status codes, JSON keys, and year numbers</li>
+<li><strong>LLM-as-a-Judge</strong> (a fresh model reading saved logs) catches subtle <strong>semantic drift</strong>&#x2014;such as Talbot lecturing on someone else&apos;s reform theory <sup class="n"><a href="#ref-weber2021shock" title="Isabella M. Weber, How China Escaped Shock Therapy: The Market Reform Debate (Routledge, 2021).">3</a></sup></li>
+</ul>
+</div></div>
+</div>
+</div>
+<div class="read"><p>Pairing deterministic integration assertions with an LLM-as-a-Judge rubric over saved dialogue logs catches subtle historical purpose drift that regexes alone miss.</p>
+</div></section>
+<section id="m4-12-e2e-playwright"><h2><a href="#m4-12-e2e-playwright"><span class="no">42</span>Level 3 · End-to-end Playwright tests walk the real bow deck like a player.</a></h2>
+<div class="body"><h1>Level 3 &#xb7; End-to-end Playwright tests walk the real bow deck like a player.</h1>
+<pre><code class="language-typescript">// tests/e2e_bow_deck.spec.ts &#x2014; Run with: npx playwright test
+import { test, expect } from &apos;@playwright/test&apos;
+
+test(&apos;player talks to James Talbot on bow deck with zero errors&apos;, async ({ page }) =&gt; {
+  const errors: string[] = []
+  page.on(&apos;pageerror&apos;, e =&gt; errors.push(e.message))
+  page.on(&apos;console&apos;, m =&gt; { if (m.type() === &apos;error&apos;) errors.push(m.text()) })
+
+  await page.setViewportSize({ width: 1280, height: 720 })
+  await page.goto(&apos;http://localhost:3090&apos;)
+  await page.click(&apos;[data-testid=&quot;enter-bow-deck&quot;]&apos;)
+  await page.click(&apos;[data-testid=&quot;npc-expert-1&quot;]&apos;)
+  await page.fill(&apos;[data-testid=&quot;chat-input&quot;]&apos;, &apos;What preconditions do macro tools need?&apos;)
+  await page.click(&apos;[data-testid=&quot;chat-send&quot;]&apos;)
+
+  await expect(page.locator(&apos;[data-testid=&quot;chat-reply&quot;]&apos;)).toContainText(/credit|institutions/i)
+  const clipped = await page.evaluate(() =&gt; {
+    const el = document.querySelector(&apos;#dialogue-panel&apos;)!
+    return el.scrollHeight &gt; el.clientHeight
+  })
+  expect(clipped).toBe(false)
+  expect(errors).toEqual([])
+  await page.screenshot({ path: &apos;test-results/bow-deck-verified.png&apos; })
+})
+</code></pre>
+</div>
+<div class="read"><p>A 20-line Playwright E2E test opens the real browser viewport, clicks into the <em>Bashan</em> bow-deck conversation, checks for zero console errors and zero text clipping, and saves a proof screenshot.</p>
+</div></section>
+<section id="m4-13-e2e-run-and-stacks"><h2><a href="#m4-13-e2e-run-and-stacks"><span class="no">43</span>Pick the exact testing recipe that matches your project's technology stack.</a></h2>
+<div class="body"><h1>Pick the exact testing recipe that matches your project&apos;s technology stack.</h1>
+<div>
+<ul>
+<li><strong>Compile gate</strong>: <code>python3 -m compileall -q . &amp;&amp; ruff check . &amp;&amp; mypy src/</code></li>
+<li><strong>Unit &amp; Integration</strong>: <code>pytest -q</code> (pure functions + <code>FastAPI TestClient</code> / <code>Flask test_client</code>)</li>
+<li><strong>End-to-End &amp; Visual</strong>: <code>npx playwright test</code> against <code>localhost</code></li>
+</ul>
+</div>
+<div>
+<ul>
+<li><strong>Architecture rule</strong>: Move game state &amp; dialogue out of <code>index.html</code> into <code>src/state.js</code></li>
+<li><strong>Unit &amp; Integration</strong>: <code>npx vitest run</code> checking <code>src/state.js</code> and all <code>.json</code> / <code>.csv</code> files</li>
+<li><strong>End-to-End &amp; Visual</strong>: <code>npx playwright test</code> checking <code>pageerror</code>, <code>404</code> assets, and canvas/UI screenshots</li>
+</ul>
+</div>
+<div>
+<ul>
+<li><strong>Unit &amp; Data (<code>&lt; 0.1s</code>)</strong>: Keep NPC cards &amp; evidence in <code>.json</code> / <code>.csv</code> and test with <code>pytest</code> or <code>Vitest</code></li>
+<li><strong>Engine Integration</strong>: Unity Test Framework (<code>Unity -batchmode -runTests</code>) or Godot <code>GUT</code> (<code>godot --headless</code>)</li>
+<li><strong>WebGL Export E2E</strong>: Run <code>npx playwright test</code> on your exported HTML5/WebGL folder before deploying</li>
+</ul>
+</div>
+</div>
+<div class="read"><p>Every student project archetype&#x2014;Python web apps, HTML/Canvas games, and Unity/Godot builds&#x2014;maps cleanly onto a three-tier compile, unit/integration, and Playwright E2E workflow.</p>
+</div></section>
+<section id="m4-13b-test-workbench"><h2><a href="#m4-13b-test-workbench"><span class="no">44</span>Interactive workbench: inject Unit, Integration, and E2E bugs into *Bashan*.</a></h2>
+<div class="body"><h1>Interactive workbench: inject Unit, Integration, and E2E bugs into <em>Bashan</em>.</h1>
+<p class="elsewhere">An interactive element appears here on the slide.</p>
+</div>
+<div class="read"><p>Use this interactive <em>Bashan</em> workbench to inject an off-by-one rule bug, a cross-economist historical contamination bug, and a broken DOM event handler, observing which layer of the test suite catches each failure.</p>
+</div></section>
+<section id="m5-01-sec"><h2><a href="#m5-01-sec"><span class="no">45</span>A project trapped on localhost cannot gather real feedback or readers.</a></h2>
+<div class="body"><h1>A project trapped on localhost cannot gather real feedback or readers.</h1>
+<p>Choosing the simplest deployment architecture, protecting API keys, handling payments, and pre-computing heavy data.</p>
+</div>
+<div class="read"><p>Part 2 covers deploying projects to the open web&#x2014;choosing between static hosting, serverless workers, and virtual machines, handling payments, and pre-computing expensive operations like embeddings.</p>
+</div></section>
+<section id="m5-02-deploy-tiers"><h2><a href="#m5-02-deploy-tiers"><span class="no">46</span>Start from pure static hosting and add server layers only when forced.</a></h2>
+<div class="body"><h1>Start from pure static hosting and add server layers only when forced.</h1>
+<div class="route">
+<div class="step"><span class="yr">Tier 1 &#xb7; Free</span><p class="what">Static site</p><p class="how">HTML, JS, JSON, Unity WebGL</p></div>
+<div class="arrow">&#x2192;</div>
+<div class="step red"><span class="yr">Tier 2 &#xb7; &#x24;0&#x2013;&#x24;5</span><p class="what">Static + Worker</p><p class="how">secret API keys &amp; rate limits</p></div>
+<div class="arrow">&#x2192;</div>
+<div class="step"><span class="yr">Tier 3 &#xb7; &#x24;5/mo</span><p class="what">Virtual Machine</p><p class="how">24/7 Python, DB writes, sockets</p></div>
+</div>
+<p class="sub">Ninety percent of humanities and game prototypes belong in Tier 1 or Tier 2.</p>
+</div>
+<div class="read"><p>Choose the lightest deployment tier that fits: pure static hosting first, a serverless worker second when secret API keys are required, and a virtual machine only for stateful heavy backends.</p>
+</div></section>
+<section id="m5-03-static-pages"><h2><a href="#m5-03-static-pages"><span class="no">47</span>Deploy your project to Cloudflare Pages (+ Worker) in three steps this week.</a></h2>
+<div class="body"><h1>Deploy your project to Cloudflare Pages (+ Worker) in three steps this week.</h1>
+<div class="body">
+<div class="term">
+<div class="term-bar"><span>Terminal &#xb7; Cloudflare deploy commands</span></div>
+<pre>
+<span class="dim"># 1. Log in once (opens browser):</span>
+<span class="blk">&#x24; npx wrangler login</span>
+&#xa0;
+<span class="dim"># 2. Deploy static site / WebGL folder (dist/ or public/):</span>
+<span class="blk">&#x24; npx wrangler pages deploy dist --project-name=my-dh-project</span>
+<span class="ok">&#x1f30e; Live: https://my-dh-project.pages.dev</span>
+&#xa0;
+<span class="dim"># 3. Optional: if calling an LLM API, deploy Worker + secret:</span>
+<span class="blk">&#x24; npx wrangler secret put OPENROUTER_API_KEY</span>
+<span class="blk">&#x24; npx wrangler deploy worker.js</span>
+</pre>
+<div class="term-foot">Or connect GitHub repo in dash.cloudflare.com &#x2192; Workers &amp; Pages</div>
+</div>
+<div class="frame hot"><span class="label">Zero-card setup notes</span><div class="text">
+<ul>
+<li><strong>Free forever</strong> for static sites (<code>&#x24;0/mo</code>, global CDN, HTTPS)</li>
+<li><strong>Alternative:</strong> in <code>dash.cloudflare.com</code> &#x2192; <strong>Workers &amp; Pages &#x2192; Create &#x2192; Connect to Git</strong> (auto-deploys on every <code>git push</code>)</li>
+<li><strong>Unity / Godot WebGL:</strong> export uncompressed or <code>.br</code> HTML5 folder into <code>dist/</code> and run Step 2</li>
+</ul>
+</div></div>
+</div>
+</div>
+<div class="read"><p>Deploy to Cloudflare in minutes: run <code>npx wrangler login</code> and <code>npx wrangler pages deploy &lt;folder&gt; --project-name=&lt;name&gt;</code> (or connect your GitHub repository in <code>dash.cloudflare.com</code>), adding <code>wrangler secret put</code> only if your app calls a live LLM API.</p>
+</div></section>
+<section id="m5-04-worker-why"><h2><a href="#m5-04-worker-why"><span class="no">48</span>Never expose an API key in browser code—put a Cloudflare Worker in front.</a></h2>
+<div class="body"><h1>Never expose an API key in browser code&#x2014;put a Cloudflare Worker in front.</h1>
+<div class="frame fit"><span class="label">Frontend key leak vs. Cloudflare Pages + Worker proxy</span><div class="pic"><figure><img src="assets/71c9b79d31-diag-cloudflare-worker.svg" alt="Diagram contrasting an exposed browser API key stolen from frontend JS with a 20-line Cloudflare Worker proxy keeping env.OPENROUTER_API_KEY private." loading="lazy"><figcaption>Exposed browser key vs. Cloudflare Pages + Worker proxy. Course diagram</figcaption></figure></div></div>
+</div>
+<div class="read"><p>Never ship an LLM API key inside browser JavaScript; host static assets on Cloudflare Pages and route <code>/api/chat</code> through a free 20-line Cloudflare Worker holding <code>env.OPENROUTER_API_KEY</code>.</p>
+</div></section>
+<section id="m5-05-worker-bashan"><h2><a href="#m5-05-worker-bashan"><span class="no">49</span>Twenty lines of Worker code proxy Bashan's live NPC chat safely.</a></h2>
+<div class="body"><h1>Twenty lines of Worker code proxy Bashan&apos;s live NPC chat safely.</h1>
+<pre><code class="language-javascript">// worker.js &#x2014; Deploy with: npx wrangler deploy
+export default {
+  async fetch(req, env) {
+    if (req.method !== &quot;POST&quot;) return new Response(&quot;Method Not Allowed&quot;, { status: 405 })
+    const { npcId, message } = await req.json()
+
+    const upstream = await fetch(&quot;https://openrouter.ai/api/v1/chat/completions&quot;, {
+      method: &quot;POST&quot;,
+      headers: {
+        &quot;Authorization&quot;: `Bearer &#x24;{env.OPENROUTER_API_KEY}`, // Stored via: wrangler secret put
+        &quot;Content-Type&quot;: &quot;application/json&quot;,
+      },
+      body: JSON.stringify({
+        model: &quot;deepseek/deepseek-chat&quot;,
+        messages: [{ role: &quot;system&quot;, content: loadNpcPrompt(npcId) }, { role: &quot;user&quot;, content: message.slice(0, 400) }],
+      }),
+    })
+    return new Response(upstream.body, { headers: { &quot;Content-Type&quot;: &quot;application/json&quot; } })
+  }
+}
+</code></pre>
+</div>
+<div class="read"><p>A 20-line Cloudflare Worker reads <code>env.OPENROUTER_API_KEY</code> from encrypted edge secrets, caps prompt length, forwards NPC chat to OpenRouter, and runs within Cloudflare&apos;s free 100,000-requests/day tier.</p>
+</div></section>
+<section id="m5-06-vps-when"><h2><a href="#m5-06-vps-when"><span class="no">50</span>Rent a VPS only when your project needs persistent databases or heavy compute.</a></h2>
+<div class="body"><h1>Rent a VPS only when your project needs persistent databases or heavy compute.</h1>
+<div class="body">
+<div class="frame"><span class="label">What is a Virtual Machine (VPS)?</span><div class="text">
+<ul>
+<li>a rented Linux slice running 24/7 with its own IP, disk, and RAM (<strong>Hetzner</strong>, <strong>DigitalOcean</strong>, <strong>AWS Lightsail</strong> &#xb7; <code>~&#x24;4.50&#x2013;&#x24;6/mo</code>)</li>
+<li>you SSH in, run <strong>Caddy / Nginx</strong>, and keep Python (<code>uvicorn</code>) or Node running under <code>systemd</code> or Docker</li>
+</ul>
+</div></div>
+<div class="frame hot"><span class="label">When you actually need one</span><div class="text">
+<ul>
+<li>multi-user persistent database writes (<strong>PostgreSQL / SQLite</strong>)</li>
+<li>heavy Python libraries (<code>scipy</code>, <code>spacy</code>, custom C extensions) that exceed Worker CPU limits</li>
+<li>stateful multiplayer WebSocket rooms</li>
+</ul>
+</div></div>
+</div>
+</div>
+<div class="read"><p>A Virtual Private Server (VPS, <code>~&#x24;5/month</code> on Hetzner or DigitalOcean) provides a 24/7 Linux machine for stateful databases, heavy Python libraries, or multiplayer WebSockets when Workers are not enough.</p>
+</div></section>
+<section id="m5-08-stripe-lemonsqueezy"><h2><a href="#m5-08-stripe-lemonsqueezy"><span class="no">51</span>Compare standard Stripe, Lemon Squeezy, and Stripe Managed Payments.</a></h2>
+<div class="body"><h1>Compare standard Stripe, Lemon Squeezy, and Stripe Managed Payments.</h1>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Legal seller (MoR)</th>
+<th>Company &amp; global tax burden</th>
+<th>Typical fee</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Standard Stripe</strong></td>
+<td><strong>You</strong> (requires eligible business / HK or US entity)</td>
+<td>You remain legally responsible for global VAT/GST registration &amp; filings (Stripe Tax only calculates)</td>
+<td><code>~2.9% + &#x24;0.30</code></td>
+</tr>
+<tr>
+<td><strong>Lemon Squeezy</strong></td>
+<td><strong>Lemon Squeezy</strong> (acts as Merchant of Record)</td>
+<td><strong>Handled for you</strong>: individuals can sell globally; platform collects &amp; remits taxes and takes a cut</td>
+<td><code>5% + &#x24;0.50</code></td>
+</tr>
+<tr>
+<td><strong>Stripe Managed Payments</strong></td>
+<td><strong>Stripe&apos;s MoR entity</strong> (built after acquiring Lemon Squeezy)</td>
+<td><strong>Handled inside Stripe</strong>: native Merchant-of-Record compliance, global tax remittance &amp; fraud liability</td>
+<td><code>~6.4% + &#x24;0.30</code></td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="read"><p>Standard Stripe processes cards while leaving you as the legal seller; <strong>Lemon Squeezy</strong> and <strong>Stripe Managed Payments</strong> act as the <strong>Merchant of Record (MoR)</strong>, handling global taxes and compliance for solo creators in exchange for a slightly higher commission.</p>
+</div></section>
+<section id="m5-09-precompute-principle"><h2><a href="#m5-09-precompute-principle"><span class="no">52</span>Pre-compute fixed humanities corpora locally so deployment stays nearly free.</a></h2>
+<div class="body"><h3>Naive live backend</h3><ul><li>Re-computes summaries, clusters, or embeddings on a server per visitor</li><li>Needs a paid vector database and 24/7 Python server</li><li>Slow, fragile, and bills you for every click</li></ul><h3>Pre-compute once, ship static</h3><ul><li>Historical &amp; literary corpora rarely change after curation</li><li>Compute embeddings, UMAP coordinates, and indexes once on your laptop</li><li>Export static JSON / binary files to Cloudflare Pages for $0/month</li></ul><p>Never compute at request time what already existed at build time.</p><h1>Pre-compute fixed humanities corpora locally so deployment stays nearly free.</h1>
+</div>
+<div class="read"><p>Because historical and literary corpora are static once curated, you can pre-compute embeddings, coordinates, and indexes locally at build time instead of paying for a 24/7 backend database.</p>
+</div></section>
+<section id="m5-10-mythology-case"><h2><a href="#m5-10-mythology-case"><span class="no">53</span>Case study · Pre-computing embeddings for a comparative mythology database.</a></h2>
+<div class="body"><h1>Case study &#xb7; Pre-computing embeddings for a comparative mythology database.</h1>
+<div class="body">
+<div class="frame"><span class="label">Comparative mythology project need</span><div class="text">
+<ul>
+<li>a corpus of ~2,000 myth motifs and narrative passages across traditions</li>
+<li>readers search by <strong>meaning</strong> (<em>&quot;floods sent as divine punishment&quot;</em>) and explore related motifs visually</li>
+<li>seems to require Pinecone + FastAPI + Docker (<code>&#x24;25+/mo</code>)</li>
+</ul>
+</div></div>
+<div class="frame hot"><span class="label">Pre-computed static architecture (`&#x24;0/mo`)</span><div class="text">
+<ul>
+<li><strong>Offline (once)</strong>: Python script embeds all 2,000 passages (<code>512 dims &#xd7; float16</code> = <strong>2 MB</strong> binary file!) + 2D UMAP coordinates</li>
+<li><strong>Deployed static (<code>Pages</code>)</strong>: Browser downloads the 2 MB vector index once and runs cosine similarity in <code>&lt; 4 ms</code> in JS</li>
+<li><strong>Query vector</strong>: Either a tiny free Worker calling the embedding API (<code>&#x24;0.00001/search</code>) or in-browser <code>Transformers.js</code>!</li>
+</ul>
+</div></div>
+</div>
+</div>
+<div class="read"><p>For a comparative mythology database, pre-computing 2,000 passage embeddings into a <code>2 MB</code> static binary file eliminates vector database servers entirely: cosine similarity runs in browser JavaScript in under <code>4 ms</code>.</p>
+</div></section>
+<section id="m5-11-mythology-pipeline"><h2><a href="#m5-11-mythology-pipeline"><span class="no">54</span>Build the myth vector bundle once in Python, then search in 12 lines of JS.</a></h2>
+<div class="body"><h1>Build the myth vector bundle once in Python, then search in 12 lines of JS.</h1>
+<pre><code class="language-python"># scripts/precompute_myths.py &#x2014; Run ONCE locally (&#x24;0.02 total API cost!)
+import json, numpy as np
+from openai import OpenAI
+
+client = OpenAI()  # or OpenRouter / Gemini embedding endpoint
+passages = json.load(open(&quot;data/myths.json&quot;))
+resp = client.embeddings.create(model=&quot;text-embedding-3-small&quot;, dimensions=512,
+                                input=[p[&quot;text&quot;] for p in passages])
+vecs = np.array([d.embedding for d in resp.data], dtype=np.float16)
+vecs.tofile(&quot;public/myth-vectors.f16.bin&quot;)  # 2,000 &#xd7; 512 &#xd7; 2 bytes &#x2248; 2.0 MB!
+
+# Browser JS (public/search.js): zero backend database!
+# const scores = passages.map((p, i) =&gt; ({
+#   ...p, score: dot(queryVec, slice512(mythVectors, i))
+# })).sort((a, b) =&gt; b.score - a.score).slice(0, 10)
+</code></pre>
+</div>
+<div class="read"><p>A 10-line offline Python script packs 2,000 512-dimensional <code>float16</code> embeddings into <code>public/myth-vectors.f16.bin</code> (<code>~2 MB</code>, <code>&#x24;0.02</code> one-time cost), which static browser JavaScript searches directly via dot products.</p>
+</div></section>
+<section id="m5-11b-mythology-demo"><h2><a href="#m5-11b-mythology-demo"><span class="no">55</span>Interactive demo: pre-computed mythology embeddings at `$0/month`.</a></h2>
+<div class="body"><h1>Interactive demo: pre-computed mythology embeddings at <code>&#x24;0/month</code>.</h1>
+<p class="elsewhere">An interactive element appears here on the slide.</p>
+</div>
+<div class="read"><p>Explore how pre-computing static <code>float16</code> embeddings at build time enables sub-millisecond cross-cultural motif search across Chinese, Greek, Mesopotamian, and Norse mythology directly in the browser at <code>&#x24;0/month</code> runtime cost.</p>
+</div></section>
+<section id="m5-12-web-costs"><h2><a href="#m5-12-web-costs"><span class="no">56</span>Real 2026 web and AI costs are pennies when you pre-compute static assets.</a></h2>
+<div class="body"><h1>Real 2026 web and AI costs are pennies when you pre-compute static assets.</h1>
+<div class="table-wrap"><table><caption>2026 student deployment &amp; API cost benchmark</caption><thead><tr><th>Layer</th><th>Service</th><th>Scale</th><th>Real Cost</th><th>Best Use</th></tr></thead><tbody><tr><td>Static hosting</td><td>Cloudflare Pages / GitHub Pages</td><td>Unlimited static requests</td><td>&#x24;0 / month</td><td>HTML games, WebGL builds, pre-computed JSON</td></tr><tr><td>API worker proxy</td><td>Cloudflare Workers</td><td>100,000 requests / day</td><td>&#x24;0 / month (&#x24;5 Pro)</td><td>Hiding API keys, rate limiting, live NPC chat</td></tr><tr><td>Pre-computed embeddings</td><td>text-embedding-3-small / Gemini</td><td>2,000 myth passages (~1M tokens)</td><td>&#x24;0.02 one-time</td><td>Comparative mythology search &#x2014; computed once locally</td></tr><tr><td>Live NPC dialogue</td><td>DeepSeek / Gemini Flash (OpenRouter)</td><td>1,000 player turns (~1.5M tokens)</td><td>&#x24;0.20 &#x2013; &#x24;0.45</td><td>Bashan bow-deck conversations</td></tr><tr><td>Virtual machine (VPS)</td><td>Hetzner / DigitalOcean</td><td>2 vCPU &#xb7; 4 GB RAM &#xb7; 40 GB SSD</td><td>&#x24;4.50 &#x2013; &#x24;6 / month</td><td>Heavy Python backends, SQLite/Postgres writes</td></tr></tbody></table></div>
+</div>
+<div class="read"><p>With static hosting (<code>&#x24;0/mo</code>), free-tier Workers (<code>&#x24;0/mo</code>), one-time embedding pre-computation (<code>&#x24;0.02</code>), and fast models like DeepSeek or Gemini Flash (<code>~&#x24;0.20&#x2013;&#x24;0.45</code> per 1,000 turns), shipping a live AI humanities project costs pennies.</p>
+</div></section>
+<section id="m5-13-deploy-checklist"><h2><a href="#m5-13-deploy-checklist"><span class="no">57</span>Always run your Playwright smoke test one last time against the deployed URL.</a></h2>
+<div class="body"><ul><li>Step 1: Pre-compute &amp; test: pytest / Vitest + local Playwright green</li><li>Step 2: Deploy Pages + Worker: wrangler pages deploy dist + secret key</li><li>Step 3: Test the live URL!: PLAYWRIGHT_BASE_URL=https://... npx playwright test</li></ul><h1>Always run your Playwright smoke test one last time against the deployed URL.</h1>
+</div>
+<div class="read"><p>Deployment is only complete after pointing your Playwright E2E smoke test at the live <code>https://</code> URL to catch missing environment secrets, case-sensitive asset paths, or CORS errors.</p>
+</div></section>
+<section id="m6-01-sec"><h2><a href="#m6-01-sec"><span class="no">58</span>Two weeks remain after tonight: finish a real work, deploy it, and test it on real people.</a></h2>
+<div class="body"><h1>Two weeks remain after tonight: finish a real work, deploy it, and test it on real people.</h1>
+<p>No half-built toy demos&#x2014;upgrade end to end and close the loop with user feedback.</p>
+</div>
+<div class="read"><p>With two weeks remaining after tonight, the focus shifts from new concepts to full-scale craftsmanship, live deployment, and structured external user feedback.</p>
+</div></section>
+<section id="m6-02-two-weeks-left"><h2><a href="#m6-02-two-weeks-left"><span class="no">59</span>Two weeks remain to turn prototypes into tested, deployed works.</a></h2>
+<div class="body"><ul><li>This Week · W10: Deploy on Cloudflare + set up automated tests + send URL to 2 friends</li><li>Next Week · W11: Live showcase: HTML schematic + running test suite + auto-browser + feedback loops: Mandatory demo</li><li>Final Week · W12: Polished public release + reproducible LaTeX design paper</li></ul><h1>Two weeks remain to turn prototypes into tested, deployed works.</h1>
+</div>
+<div class="read"><p>This week focuses on Cloudflare deployment and initial test setup; Week 11 showcases your project schematic, live test suite, automated browser checks, and user feedback loops; Week 12 delivers the final public work and LaTeX design paper.</p>
+</div></section>
+<section id="m6-03-upgrade-bar"><h2><a href="#m6-03-upgrade-bar"><span class="no">60</span>Every project requires a full end-to-end upgrade with zero half-baked placeholders.</a></h2>
+<div class="body"><h1>Every project requires a full end-to-end upgrade with zero half-baked placeholders.</h1>
+<div class="body">
+<div class="frame"><span class="label">Engine or Web &#x2014; both are welcome</span><div class="text">
+<ul>
+<li><strong>Real game engine (<code>Unity</code> / <code>Godot</code>)</strong>: complete lighting, collision, audio/UI feedback, and WebGL/build export</li>
+<li><strong>Pure Web / HTML</strong>: completely fine <strong>if crafted thoroughly</strong>&#x2014;clean typography, responsive layout, zero dead buttons or raw JSON dumps</li>
+</ul>
+</div></div>
+<div class="frame hot"><span class="label">Zero half-finished scaffolding</span><div class="text">
+<ul>
+<li>no <em>&quot;TODO&quot;</em>, broken links, placeholder boxes, or unverified AI hallucinations</li>
+<li>every claim, character card, or database entry tied to real sources (<code>&#x636e; / &#x63a8;&#x65ad; / &#x8bbe;</code>)</li>
+<li>build something with <strong>genuine historical and scholarly value</strong> that you are proud to share publicly</li>
+</ul>
+</div></div>
+</div>
+</div>
+<div class="read"><p>Whether built in Unity/Godot or pure HTML/Web, every project must undergo a thorough end-to-end upgrade eliminating placeholder UI, broken states, and unverified claims.</p>
+</div></section>
+<section id="m6-03b-this-week"><h2><a href="#m6-03b-this-week"><span class="no">61</span>This week's steps (before Wed 18 Nov): deploy, test, and share.</a></h2>
+<div class="body"><h1>This week&apos;s steps (before Wed 18 Nov): deploy, test, and share.</h1>
+<div class="grid">
+<div class="frame hot"><span class="label">01 &#xb7; Deploy on Cloudflare</span><div class="text">
+<ul>
+<li>ship your current build to <strong>Cloudflare Pages</strong> (<code>*.pages.dev</code>, plus Worker if using an API)</li>
+<li>verify the public link opens cleanly on another device</li>
+</ul>
+</div></div>
+<div class="frame hot"><span class="label">02 &#xb7; Set up &amp; try testing</span><div class="text">
+<ul>
+<li>recall last week&apos;s preview (<strong>evidence check + Browser MCP + API/drift audit</strong>)</li>
+<li>install <code>Vitest</code> / <code>pytest</code> + <code>Playwright</code> and run your <strong>first automated tests</strong></li>
+</ul>
+</div></div>
+<div class="frame"><span class="label">03 &#xb7; Share link with 2 friends</span><div class="text">
+<ul>
+<li>send your live Cloudflare URL to <strong>at least two friends</strong> outside your team and collect their raw bug/UX notes</li>
+</ul>
+</div></div>
+</div>
+</div>
+<div class="read"><p>This week: (1) deploy your project to a live Cloudflare Pages URL, (2) install <code>Vitest</code>/<code>pytest</code> + <code>Playwright</code> and get your initial data, logic, and browser tests running, and (3) share the live URL with two friends to gather feedback.</p>
+</div></section>
+<section id="m6-04-assignment-four-parts"><h2><a href="#m6-04-assignment-four-parts"><span class="no">62</span>Next week in class (Wed 18 Nov): show all four feedback loops live.</a></h2>
+<div class="body"><h1>Next week in class (Wed 18 Nov): show all four feedback loops live.</h1>
+<div class="grid">
+<div class="frame hot"><span class="label">01 &#xb7; Ideation loop + Your own schematic</span><div class="text">
+<ul>
+<li>show <strong>real back-and-forth ideation</strong> with your agent (<code>plan.md</code> + <code>/goal</code>), not one-line prompts</li>
+<li>present <strong>your own project schematic</strong> generated by the agent (<strong>HTML diagram skill</strong>, Excalidraw, or Mermaid)</li>
+</ul>
+</div></div>
+<div class="frame hot"><span class="label">02 &#xb7; Automated test suite (running live!)</span><div class="text">
+<ul>
+<li>run your tests live and explain <strong>what you tested</strong> across <strong>unit, integration, and E2E</strong></li>
+<li>show <code>0</code> errors on your historical data (<code>&#x636e;/&#x63a8;&#x65ad;/&#x8bbe;</code>) and core state rules</li>
+</ul>
+</div></div>
+<div class="frame"><span class="label">03 &#xb7; Automatic Browser MCP loop</span><div class="text">
+<ul>
+<li>prove your browser loop <strong>runs automatically</strong> (<code>@playwright/mcp</code> + headless Playwright screenshots, zero manual eyeballing)</li>
+</ul>
+</div></div>
+<div class="frame"><span class="label">04 &#xb7; External feedback &#x2192; regression test</span><div class="text">
+<ul>
+<li>show how you fixed <strong>2 friends&apos; feedback</strong> on your deployed app and <strong>locked each fix into a permanent test</strong></li>
+</ul>
+</div></div>
+</div>
+</div>
+<div class="read"><p>Next week you must demonstrate all four loops live: (1) genuine ideation dialogue + an agent-generated <strong>HTML/Excalidraw/Mermaid schematic</strong> of your project, (2) a <strong>live-running test suite</strong> with a clear account of what it tests, (3) <strong>automated browser verification</strong>, and (4) <strong>2 friends&apos; feedback</strong> converted into regression tests.</p>
+</div></section>
+<section id="m6-05-feedback-to-test-bashan"><h2><a href="#m6-05-feedback-to-test-bashan"><span class="no">63</span>Worked example · Turning a friend's Bashan playtest into code and a test.</a></h2>
+<div class="body"><h1>Worked example &#xb7; Turning a friend&apos;s Bashan playtest into code and a test.</h1>
+<div class="route">
+<div class="step"><span class="yr">01 &#xb7; Friend&apos;s feedback</span><p class="what">&quot;Double-clicking Send fired two overlapping replies from Talbot&quot;</p><p class="how">recorded in `docs/user-feedback.md`</p></div>
+<div class="arrow">&#x2192;</div>
+<div class="step"><span class="yr">02 &#xb7; Code integration</span><p class="what">Disable Send button while `inFlight === true`</p><p class="how">patched in `src/chat-ui.ts`</p></div>
+<div class="arrow">&#x2192;</div>
+<div class="step red"><span class="yr">03 &#xb7; New E2E test</span><p class="what">`dblclick(&apos;#chat-send&apos;)` asserts `apiCalls === 1`</p><p class="how">saved forever in `tests/e2e_bow_deck.spec.ts`</p></div>
+</div>
+<p class="sub">Every real human bug report becomes one permanent automated assertion.</p>
+</div>
+<div class="read"><p>When a playtester reports a concrete issue&#x2014;such as double-clicking Send triggering duplicate NPC replies&#x2014;you record the feedback, ship the UI fix, and add a permanent Playwright test asserting <code>apiCalls === 1</code> on rapid clicks.</p>
+</div></section>
+<section id="m6-06-closing"><h2><a href="#m6-06-closing"><span class="no">64</span>Plan clearly, test automatically, and ship live.</a></h2>
+<div class="body"><ul><li>Prevent goal drift — lock docs/plan.md in Plan mode before launching OpenCode /goal.</li><li>Close both feedback loops — Ideation schematics before code; Browser MCP + 3-tier tests during code.</li></ul><p><strong>Deploy on Cloudflare this week, then showcase your schematic, live tests, and auto-browser next week.</strong></p><h1>Plan clearly, test automatically, and ship live.</h1>
+</div>
+<div class="read"><p>Anchor OpenCode <code>/goal</code> to an agreed plan, pair ideation schematics with automated browser and test gates, deploy on Cloudflare this week, and demonstrate all feedback loops live next week.</p>
+</div></section>
+<section id="references"><h2>References</h2><ol class="refs"><li id="ref-kornai2006force">Kornai, János. <i>By Force of Thought: Irregular Memoirs of an Intellectual Journey</i>. MIT Press, 2006.</li><li id="ref-tobin1986macro">Tobin, James. “略论非集中型经济的宏观控制.” In <i>宏观经济的管理与改革</i>, edited by 中国经济体制改革研究会, translated by 杨京平. 经济日报出版社, 1986.</li><li id="ref-weber2021shock">Weber, Isabella M. <i>How China Escaped Shock Therapy: The Market Reform Debate</i>. Routledge, 2021.</li></ol></section>
+<p class="m">Made with Reslides (MIT), based on Slidev.</p>
+</main>
+</body>
+</html>

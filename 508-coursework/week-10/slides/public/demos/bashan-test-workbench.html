@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bashan 1985 · Interactive 3-Layer Test Workbench</title>
+  <style>
+    :root {
+      --bg: #ffffff; --ink: #111111; --muted: #5b5b55; --red: #e31f27;
+      --green: #16794b; --rule: #dededc; --soft: #f7f7f4;
+      --sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --serif: 'Newsreader', Georgia, serif;
+      --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 14px 18px; font-family: var(--sans); background: var(--bg); color: var(--ink); }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1.5px solid #111; padding-bottom: 11px; margin-bottom: 14px; align-items: center; }
+    .btn {
+      font: 700 12px/1.2 var(--mono); padding: 8px 12px; border: 1.5px solid #111;
+      background: #fff; color: #111; cursor: pointer;
+    }
+    .btn.active-ok { background: var(--green); border-color: var(--green); color: #fff; }
+    .btn.active-bug { background: var(--red); border-color: var(--red); color: #fff; }
+    .grid { display: grid; grid-template-columns: 1.02fr 0.98fr; gap: 16px; align-items: stretch; }
+    .panel { position: relative; border: 1.5px solid #111; padding: 18px 15px 14px; background: #fff; display: flex; flex-direction: column; gap: 10px; }
+    .lbl {
+      position: absolute; top: 0; left: 12px; transform: translateY(-50%);
+      background: #fff; padding: 0 7px; font: 700 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--red);
+    }
+    .hud { background: #1c1917; color: #f5f5f4; padding: 14px; border: 1px solid #111; display: flex; flex-direction: column; gap: 9px; }
+    .hud-top { display: flex; justify-content: space-between; font: 700 11.5px/1 var(--mono); color: #fbbf24; }
+    .bubble { background: #292524; border-left: 3px solid #fbbf24; padding: 10px 12px; font-size: 13.5px; line-height: 1.48; }
+    .bubble.bad { border-left-color: #f87171; background: #3b1818; }
+    .runner { background: #18181b; color: #f4f4f5; padding: 14px; border: 1px solid #111; font-family: var(--mono); font-size: 12.5px; display: flex; flex-direction: column; gap: 9px; flex: 1; }
+    .trow { padding: 9px 11px; background: #27272a; border-left: 4px solid #4ade80; }
+    .trow.fail { background: #3b1619; border-left-color: #f87171; }
+    .trow .head { display: flex; justify-content: space-between; font-weight: 700; }
+    .pass-txt { color: #4ade80; }
+    .fail-txt { color: #f87171; }
+    .diff { margin-top: 6px; padding: 6px 8px; background: #111113; color: #fca5a5; font-size: 11.5px; line-height: 1.45; white-space: pre-wrap; }
+    .sub { color: #a1a1aa; font-size: 11.5px; margin-top: 3px; }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <span style="font:700 12px/1 var(--mono);text-transform:uppercase;margin-right:4px">Scenario:</span>
+    <button class="btn active-ok" id="b-clean" onclick="setMode('clean')">✓ All Clean (3/3 Pass)</button>
+    <button class="btn" id="b-unit" onclick="setMode('unit')">⚡ Inject Unit Bug (Trust &gt; 60)</button>
+    <button class="btn" id="b-int" onclick="setMode('int')">🔗 Inject Integration Bug (Kornai → Tobin)</button>
+    <button class="btn" id="b-e2e" onclick="setMode('e2e')">🌐 Inject E2E Bug (Broken Ask Button)</button>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <span class="lbl">LEFT · LIVE BASHAN BOW-DECK STATE (SEPTEMBER 1985)</span>
+      <div class="hud">
+        <div class="hud-top">
+          <span>SCENE: BOW DECK (bashan-anchor)</span>
+          <span id="trust-pill">PLAYER TRUST = 60 / 100</span>
+        </div>
+        <div style="font:600 15px/1.25 var(--serif);color:#fff">James Tobin (Yale Economist · expert-1.json)</div>
+        <div class="bubble" id="npc-reply"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px;font:600 11.5px/1.2 var(--mono)">
+          <span id="unlock-badge" style="color:#4ade80"></span>
+          <span id="ui-btn-badge" style="padding:5px 9px;background:#44403c;color:#fff">[#ask-tobin] Ask about Credit</span>
+        </div>
+      </div>
+      <div style="padding:9px 11px;background:var(--soft);border:1px solid var(--rule);font-size:13px;line-height:1.48" id="explain-box"></div>
+    </div>
+
+    <div class="panel">
+      <span class="lbl">RIGHT · AUTOMATED 3-LAYER TEST SUITE OUTPUT</span>
+      <div class="runner" id="runner-out"></div>
+    </div>
+  </div>
+
+  <script>
+    const STATES = {
+      clean: {
+        badBubble: false,
+        reply: '“Indirect monetary levers—interest rates and reserve ratios—only work once state banks actually respond to profit signals and national statistics are reliable [选编 pp. 152, 157–158].”',
+        unlock: '✓ Claim TOBIN-02 Unlocked (trust 60 >= 60)',
+        btnText: '[#ask-tobin] Click → 200 OK',
+        explain: '<b>Baseline:</b> Pure logic unlocks at <code>trust === 60</code>, SQLite + JSON keep Tobin strictly on his pp. 150–158 paper, and the browser button triggers the dialogue.',
+        tests: [
+          { pass: true, name: '1. UNIT · test_dialogue_rules.py', time: '0.02s', detail: 'can_unlock_claim(trust=60, threshold=60) === True' },
+          { pass: true, name: '2. INTEGRATION · test_prompt_ledger.py', time: '0.24s', detail: 'expert-1.json citations match bashan-evidence.csv; 0 Kornai leaks' },
+          { pass: true, name: '3. E2E · bow-deck.spec.ts (Playwright)', time: '3.40s', detail: 'click("#ask-tobin") renders .npc-reply with 0 console errors' }
+        ]
+      },
+      unit: {
+        badBubble: true,
+        reply: '🔒 [Claim TOBIN-02 Remains Locked — Player stuck at Trust 60!]',
+        unlock: '✗ Off-by-one bug: 60 > 60 evaluated to False',
+        btnText: '[#ask-tobin] Click → Locked',
+        explain: '<b>Why Unit Tests exist:</b> The agent changed <code>player_trust &gt;= threshold</code> to <code>&gt;</code> while refactoring. A pure Python unit test catches this in <b>20 milliseconds</b> with zero browser or LLM calls.',
+        tests: [
+          { pass: false, name: '1. UNIT · test_dialogue_rules.py', time: '0.02s', detail: 'AssertionError at boundary trust=60', diff: '- Expected: can_unlock_claim(60, 60) -> True\n+ Received: False  (rules.py:14 used `>` instead of `>=`)' },
+          { pass: true, name: '2. INTEGRATION · test_prompt_ledger.py', time: '0.24s', detail: 'CSV ledger & prompt boundaries intact' },
+          { pass: false, name: '3. E2E · bow-deck.spec.ts (Playwright)', time: '3.60s', detail: 'Cascade failure: unlock badge never appeared on bow deck' }
+        ]
+      },
+      int: {
+        badBubble: true,
+        reply: '“China’s enterprises suffer from Type II paternalistic soft budget constraints—we must abolish state paternalism first!”  ← [HISTORICAL HALLUCINATION: That is János Kornai, NOT James Tobin!]',
+        unlock: '✓ Claim Unlocked (but wrong economist loaded!)',
+        btnText: '[#ask-tobin] Click → 200 OK',
+        explain: '<b>Why Integration Tests exist:</b> Python syntax is valid and every button clicks fine, so compilation and basic UI checks pass—only a cross-module check between <code>expert-1.json</code> and <code>bashan-evidence.csv</code> catches Kornai leaking into Tobin’s prompt!',
+        tests: [
+          { pass: true, name: '1. UNIT · test_dialogue_rules.py', time: '0.02s', detail: 'Pure math & trust thresholds still pass' },
+          { pass: false, name: '2. INTEGRATION · test_prompt_ledger.py', time: '0.26s', detail: 'Cross-economist contamination detected in build_expert_prompt("expert-1")', diff: '- Forbidden term in expert-1 (Tobin): "软预算约束 / soft budget constraint"\n+ Belongs to expert-2 (János Kornai, 选编 pp. 191–205)' },
+          { pass: true, name: '3. E2E · bow-deck.spec.ts (UI smoke)', time: '3.35s', detail: 'UI rendered a string without crashing (proving UI smoke alone is not enough!)' }
+        ]
+      },
+      e2e: {
+        badBubble: true,
+        reply: '[Nothing happens when player clicks Ask — Uncaught TypeError in console]',
+        unlock: '✓ Backend rules & CSV ledger both valid',
+        btnText: '[#ask-tobin] ✗ TypeError: null',
+        explain: '<b>Why Browser E2E Tests exist:</b> Backend unit tests and prompt integration tests are 100% green, yet renaming <code>#ask-tobin</code> to <code>#btn-ask</code> in CSS/HTML broke the real game in Chrome.',
+        tests: [
+          { pass: true, name: '1. UNIT · test_dialogue_rules.py', time: '0.02s', detail: 'Pure Python logic passes (0.02s)' },
+          { pass: true, name: '2. INTEGRATION · test_prompt_ledger.py', time: '0.24s', detail: 'Prompt + SQLite + CSV wiring passes (0.24s)' },
+          { pass: false, name: '3. E2E · bow-deck.spec.ts (Playwright)', time: '4.10s', detail: 'Real Chromium caught broken DOM wiring + console error', diff: 'pageerror: Uncaught TypeError: Cannot read properties of null (reading "addEventListener")\nLocator(".npc-reply") timed out waiting for visible text' }
+        ]
+      }
+    };
+
+    function setMode(key) {
+      for (const k of ['clean', 'unit', 'int', 'e2e']) {
+        const b = document.getElementById('b-' + k);
+        b.className = 'btn' + (k === key ? (k === 'clean' ? ' active-ok' : ' active-bug') : '');
+      }
+      const s = STATES[key];
+      const bubble = document.getElementById('npc-reply');
+      bubble.className = 'bubble' + (s.badBubble ? ' bad' : '');
+      bubble.textContent = s.reply;
+      const ub = document.getElementById('unlock-badge');
+      ub.textContent = s.unlock;
+      ub.style.color = s.unlock.startsWith('✓') ? '#4ade80' : '#f87171';
+      const bb = document.getElementById('ui-btn-badge');
+      bb.textContent = s.btnText;
+      bb.style.background = s.btnText.includes('✗') ? '#991b1b' : '#44403c';
+      document.getElementById('explain-box').innerHTML = s.explain;
+
+      const out = document.getElementById('runner-out');
+      const passed = s.tests.filter(t => t.pass).length;
+      out.innerHTML = s.tests.map(t => `
+        <div class="trow ${t.pass ? '' : 'fail'}">
+          <div class="head">
+            <span class="${t.pass ? 'pass-txt' : 'fail-txt'}">${t.pass ? '✓ PASS' : '✗ FAIL'} · ${t.name}</span>
+            <span style="color:#a1a1aa">${t.time}</span>
+          </div>
+          <div class="sub">${t.detail}</div>
+          ${t.diff ? `<div class="diff">${t.diff}</div>` : ''}
+        </div>
+      `).join('') + `<div style="margin-top:auto;padding-top:8px;border-top:1px solid #3f3f46;display:flex;justify-content:space-between;font-weight:700;color:${passed===3?'#4ade80':'#f87171'}"><span>Summary: ${passed}/3 suites passed</span><span>Total time: ~3.7s</span></div>`;
+    }
+    setMode('clean');
+  </script>
+</body>
+</html>

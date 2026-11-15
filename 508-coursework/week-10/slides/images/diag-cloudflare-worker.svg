@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="520" viewBox="0 0 1440 520">
+  <defs>
+    <marker id="cw-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#e31f27"/>
+    </marker>
+    <marker id="cw-grn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#15803d"/>
+    </marker>
+  </defs>
+  <rect width="1440" height="520" fill="#ffffff"/>
+
+  <!-- Top Row: WRONG -->
+  <rect x="30" y="32" width="1380" height="196" fill="#fff5f5" stroke="#e31f27" stroke-width="2.2"/>
+  <rect x="54" y="14" width="540" height="34" fill="#e31f27"/>
+  <text x="72" y="37" fill="#fff" font-family="ui-monospace, Menlo, monospace" font-size="17" font-weight="700">✗ NEVER DO THIS · API KEY IN BROWSER JS</text>
+
+  <rect x="64" y="74" width="380" height="124" fill="#fff" stroke="#111" stroke-width="1.8"/>
+  <text x="86" y="114" fill="#111" font-family="Arial, sans-serif" font-size="22" font-weight="700">Visitor's Browser (F12)</text>
+  <text x="86" y="152" fill="#e31f27" font-family="ui-monospace, Menlo, monospace" font-size="17" font-weight="700">VITE_OPENROUTER_KEY="sk-or-…"</text>
+  <text x="86" y="182" fill="#6b6b66" font-family="Arial, sans-serif" font-size="17">Anyone reads your bundle &amp; steals credit</text>
+
+  <line x1="444" y1="136" x2="910" y2="136" stroke="#e31f27" stroke-width="3.5" marker-end="url(#cw-red)"/>
+  <text x="677" y="120" text-anchor="middle" fill="#e31f27" font-family="ui-monospace, Menlo, monospace" font-size="17" font-weight="700">Key exposed in public network tab!</text>
+
+  <rect x="920" y="74" width="456" height="124" fill="#fff" stroke="#111" stroke-width="1.8"/>
+  <text x="944" y="122" fill="#111" font-family="Arial, sans-serif" font-size="22" font-weight="700">OpenRouter / DeepSeek / Gemini</text>
+  <text x="944" y="162" fill="#b91c1c" font-family="Arial, sans-serif" font-size="19">Bots drain $200 overnight</text>
+
+  <!-- Bottom Row: RIGHT -->
+  <rect x="30" y="278" width="1380" height="212" fill="#f0fdf4" stroke="#15803d" stroke-width="2.5"/>
+  <rect x="54" y="260" width="680" height="34" fill="#15803d"/>
+  <text x="72" y="283" fill="#fff" font-family="ui-monospace, Menlo, monospace" font-size="17" font-weight="700">✓ CLOUDFLARE PAGES + WORKER PROXY ($0/MO FREE TIER)</text>
+
+  <rect x="64" y="324" width="330" height="136" fill="#fff" stroke="#111" stroke-width="1.8"/>
+  <text x="86" y="364" fill="#111" font-family="Arial, sans-serif" font-size="21" font-weight="700">Cloudflare Pages (Static)</text>
+  <text x="86" y="400" fill="#15803d" font-family="ui-monospace, Menlo, monospace" font-size="16">POST /api/chat (no key!)</text>
+  <text x="86" y="434" fill="#6b6b66" font-family="Arial, sans-serif" font-size="17">HTML, JS, Three.js, JSON</text>
+
+  <line x1="394" y1="392" x2="484" y2="392" stroke="#15803d" stroke-width="3.5" marker-end="url(#cw-grn)"/>
+
+  <rect x="492" y="324" width="400" height="136" fill="#18181b" stroke="#15803d" stroke-width="2.2"/>
+  <text x="516" y="362" fill="#4ade80" font-family="ui-monospace, Menlo, monospace" font-size="18" font-weight="700">Cloudflare Worker (20 lines)</text>
+  <text x="516" y="398" fill="#f4f4f5" font-family="ui-monospace, Menlo, monospace" font-size="16">env.OPENROUTER_API_KEY</text>
+  <text x="516" y="432" fill="#a1a1aa" font-family="Arial, sans-serif" font-size="17">Encrypted secret + 400-char cap</text>
+
+  <line x1="892" y1="392" x2="982" y2="392" stroke="#15803d" stroke-width="3.5" marker-end="url(#cw-grn)"/>
+
+  <rect x="990" y="324" width="386" height="136" fill="#fff" stroke="#111" stroke-width="1.8"/>
+  <text x="1014" y="368" fill="#111" font-family="Arial, sans-serif" font-size="21" font-weight="700">OpenRouter / LLM API</text>
+  <text x="1014" y="408" fill="#15803d" font-family="Arial, sans-serif" font-size="19">Key stays on server; 100k/day free</text>
+</svg>

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="620" viewBox="0 0 900 620">
+  <defs>
+    <marker id="m-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#333"/>
+    </marker>
+    <marker id="m-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#e31f27"/>
+    </marker>
+  </defs>
+  <rect width="900" height="620" fill="#ffffff"/>
+
+  <!-- Node A: Start -->
+  <rect x="250" y="24" width="400" height="64" rx="8" fill="#f5f5f4" stroke="#111" stroke-width="2.2"/>
+  <text x="450" y="52" text-anchor="middle" fill="#111" font-family="Arial, sans-serif" font-size="21" font-weight="700">Enter Bow Deck (bashan-anchor)</text>
+  <text x="450" y="76" text-anchor="middle" fill="#6b6b66" font-family="ui-monospace, Menlo, monospace" font-size="15">NPC: James Talbot · Sep 1985</text>
+
+  <line x1="450" y1="88" x2="450" y2="138" stroke="#333" stroke-width="2.5" marker-end="url(#m-arr)"/>
+
+  <!-- Node B: Diamond Decision -->
+  <polygon points="450,142 610,206 450,270 290,206" fill="#fff8f6" stroke="#e31f27" stroke-width="2.5"/>
+  <text x="450" y="202" text-anchor="middle" fill="#111" font-family="Arial, sans-serif" font-size="20" font-weight="700">Player Question</text>
+  <text x="450" y="226" text-anchor="middle" fill="#e31f27" font-family="ui-monospace, Menlo, monospace" font-size="15">check year &amp; topic</text>
+
+  <!-- Left Branch: 1985 Macro Levers -->
+  <path d="M 290 206 L 195 206 L 195 316" fill="none" stroke="#333" stroke-width="2.5" marker-end="url(#m-arr)"/>
+  <rect x="115" y="236" width="160" height="30" fill="#fff"/>
+  <text x="195" y="257" text-anchor="middle" fill="#15803d" font-family="ui-monospace, Menlo, monospace" font-size="16" font-weight="700">≤ Sep 1985</text>
+
+  <rect x="45" y="322" width="300" height="78" rx="6" fill="#f0fdf4" stroke="#15803d" stroke-width="2.2"/>
+  <text x="195" y="355" text-anchor="middle" fill="#111" font-family="Arial, sans-serif" font-size="20" font-weight="700">Cite Tobin Speech</text>
+  <text x="195" y="383" text-anchor="middle" fill="#15803d" font-family="ui-monospace, Menlo, monospace" font-size="16">[据] 选编 pp. 152, 157–158</text>
+
+  <!-- Right Branch: Post-1985 Anachronism -->
+  <path d="M 610 206 L 705 206 L 705 316" fill="none" stroke="#e31f27" stroke-width="2.5" marker-end="url(#m-red)"/>
+  <rect x="618" y="236" width="174" height="30" fill="#fff"/>
+  <text x="705" y="257" text-anchor="middle" fill="#e31f27" font-family="ui-monospace, Menlo, monospace" font-size="16" font-weight="700">After Sep 1985</text>
+
+  <rect x="555" y="322" width="300" height="78" rx="6" fill="#fef2f2" stroke="#e31f27" stroke-width="2.2"/>
+  <text x="705" y="355" text-anchor="middle" fill="#b91c1c" font-family="Arial, sans-serif" font-size="20" font-weight="700">Cutoff Refusal</text>
+  <text x="705" y="383" text-anchor="middle" fill="#b91c1c" font-family="ui-monospace, Menlo, monospace" font-size="15">"Not yet happened in 1985"</text>
+
+  <!-- Loop back from Refusal to Player Question -->
+  <path d="M 855 361 L 882 361 L 882 162 L 575 162" fill="none" stroke="#e31f27" stroke-width="2" stroke-dasharray="6,5" marker-end="url(#m-red)"/>
+
+  <!-- Trust Gate below Cite Tobin -->
+  <line x1="195" y1="400" x2="195" y2="452" stroke="#333" stroke-width="2.5" marker-end="url(#m-arr)"/>
+  <polygon points="195,456 325,506 195,556 65,506" fill="#faf9f5" stroke="#111" stroke-width="2.2"/>
+  <text x="195" y="512" text-anchor="middle" fill="#111" font-family="ui-monospace, Menlo, monospace" font-size="18" font-weight="700">Trust ≥ 60?</text>
+
+  <!-- Unlock Notebook Claim -->
+  <line x1="325" y1="506" x2="515" y2="506" stroke="#15803d" stroke-width="2.5" marker-end="url(#m-arr)"/>
+  <text x="415" y="495" text-anchor="middle" fill="#15803d" font-family="ui-monospace, Menlo, monospace" font-size="16" font-weight="700">Yes</text>
+
+  <rect x="522" y="468" width="332" height="76" rx="8" fill="#111" stroke="#111" stroke-width="2"/>
+  <text x="688" y="501" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="20" font-weight="700">Unlock Claim TOBIN-02</text>
+  <text x="688" y="528" text-anchor="middle" fill="#4ade80" font-family="ui-monospace, Menlo, monospace" font-size="15">Saved to Player Notebook</text>
+
+  <!-- Trust < 60 loop back -->
+  <path d="M 65 506 L 22 506 L 22 162 L 325 162" fill="none" stroke="#6b6b66" stroke-width="2" stroke-dasharray="6,5" marker-end="url(#m-arr)"/>
+  <text x="44" y="492" fill="#6b6b66" font-family="ui-monospace, Menlo, monospace" font-size="15" font-weight="700">No</text>
+</svg>

@@ -1,0 +1,13 @@
+{
+  "name": "dhg508-week10",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node \"${RESLIDES:-../../../../reslides}/packages/slidev/bin/reslides.mjs\" deck.yaml --port 3100 --remote --bind 0.0.0.0",
+    "check": "node \"${RESLIDES:-../../../../reslides}/packages/slidev/bin/reslides.mjs\" check deck.yaml",
+    "check:render": "node \"${RESLIDES:-../../../../reslides}/packages/slidev/bin/reslides.mjs\" check deck.yaml --render",
+    "build": "node \"${RESLIDES:-../../../../reslides}/packages/slidev/bin/reslides.mjs\" build deck.yaml --out dist",
+    "serve": "node scripts/serve-dist.mjs 3101 dist",
+    "shot": "node scripts/shot.mjs"
+  }
+}

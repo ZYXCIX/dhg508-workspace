@@ -15,3 +15,4 @@ you come.
 - [week-07](week-07/instructions.md) Image and 3D generation: an object with a history
 - [week-08](week-08/instructions.md) A historical simulation
 - [week-09](week-09/instructions.md) Present your design, historical significance, scholarship and technical stack
+- [week-10](week-10/instructions.md) Feedback loops, automated testing, and public deployment · [slides](week-10/slides/README.md) · [reading edition](week-10/slides/read/index.html)

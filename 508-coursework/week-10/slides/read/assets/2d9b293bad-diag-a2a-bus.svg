@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="540" viewBox="0 0 1440 540">
+  <defs>
+    <marker id="a2a-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#e31f27"/>
+    </marker>
+    <marker id="a2a-grn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#15803d"/>
+    </marker>
+    <marker id="a2a-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#111"/>
+    </marker>
+  </defs>
+  <rect width="1440" height="540" fill="#ffffff"/>
+
+  <!-- Left: Research Agent -->
+  <rect x="40" y="40" width="410" height="260" fill="#18181b" stroke="#111" stroke-width="2"/>
+  <rect x="40" y="40" width="410" height="44" fill="#27272a"/>
+  <text x="62" y="69" fill="#4ade80" font-family="ui-monospace, Menlo, monospace" font-size="18" font-weight="700">Terminal 1 · researcher</text>
+  <text x="62" y="122" fill="#f4f4f5" font-family="Arial, sans-serif" font-size="22" font-weight="700">Reads primary sources only</text>
+  <text x="62" y="164" fill="#a1a1aa" font-family="ui-monospace, Menlo, monospace" font-size="18">• 1986 巴山轮会议选编 PDF</text>
+  <text x="62" y="200" fill="#a1a1aa" font-family="ui-monospace, Menlo, monospace" font-size="18">• Tobin pp. 152, 157–158</text>
+  <text x="62" y="236" fill="#a1a1aa" font-family="ui-monospace, Menlo, monospace" font-size="18">• Kornai memory &amp; papers</text>
+  <text x="62" y="276" fill="#4ade80" font-family="ui-monospace, Menlo, monospace" font-size="16">Context clean of JS/CSS noise</text>
+
+  <!-- Center: Live MCP Bus -->
+  <rect x="545" y="75" width="350" height="190" fill="#fff8f6" stroke="#e31f27" stroke-width="2.5"/>
+  <text x="720" y="116" text-anchor="middle" fill="#e31f27" font-family="ui-monospace, Menlo, monospace" font-size="19" font-weight="700">MCP AGENT MAIL / CHAT</text>
+  <text x="720" y="154" text-anchor="middle" fill="#111" font-family="Arial, sans-serif" font-size="19">mcp-agent-mail · agentchattr</text>
+  <text x="720" y="186" text-anchor="middle" fill="#6b6b66" font-family="Arial, sans-serif" font-size="18">Inboxes + file leases + @wake</text>
+  <text x="720" y="234" text-anchor="middle" fill="#e31f27" font-family="ui-monospace, Menlo, monospace" font-size="16" font-weight="700">10-second verification</text>
+
+  <!-- Right: Builder Agent -->
+  <rect x="990" y="40" width="410" height="260" fill="#18181b" stroke="#111" stroke-width="2"/>
+  <rect x="990" y="40" width="410" height="44" fill="#27272a"/>
+  <text x="1012" y="69" fill="#60a5fa" font-family="ui-monospace, Menlo, monospace" font-size="18" font-weight="700">Terminal 2 · builder</text>
+  <text x="1012" y="122" fill="#f4f4f5" font-family="Arial, sans-serif" font-size="22" font-weight="700">Builds scene &amp; tests</text>
+  <text x="1012" y="164" fill="#a1a1aa" font-family="ui-monospace, Menlo, monospace" font-size="18">• game/people/expert-1.json</text>
+  <text x="1012" y="200" fill="#a1a1aa" font-family="ui-monospace, Menlo, monospace" font-size="18">• src/dialogue_rules.py</text>
+  <text x="1012" y="236" fill="#a1a1aa" font-family="ui-monospace, Menlo, monospace" font-size="18">• tests/e2e_bow_deck.spec.ts</text>
+  <text x="1012" y="276" fill="#60a5fa" font-family="ui-monospace, Menlo, monospace" font-size="16">Context clean of 200p PDFs</text>
+
+  <!-- Arrows between terminals and bus -->
+  <line x1="990" y1="130" x2="903" y2="130" stroke="#e31f27" stroke-width="3" marker-end="url(#a2a-red)"/>
+  <line x1="545" y1="130" x2="458" y2="130" stroke="#e31f27" stroke-width="3" marker-end="url(#a2a-red)"/>
+  <text x="946" y="116" text-anchor="middle" fill="#e31f27" font-family="ui-monospace, Menlo, monospace" font-size="15" font-weight="700">Ask</text>
+
+  <line x1="450" y1="215" x2="537" y2="215" stroke="#15803d" stroke-width="3" marker-end="url(#a2a-grn)"/>
+  <line x1="895" y1="215" x2="982" y2="215" stroke="#15803d" stroke-width="3" marker-end="url(#a2a-grn)"/>
+  <text x="494" y="201" text-anchor="middle" fill="#15803d" font-family="ui-monospace, Menlo, monospace" font-size="15" font-weight="700">Cite</text>
+
+  <!-- Bottom: Git Repository Permanent Truth -->
+  <rect x="40" y="376" width="1360" height="126" fill="#faf9f5" stroke="#111" stroke-width="2.2"/>
+  <text x="720" y="424" text-anchor="middle" fill="#111" font-family="ui-monospace, Menlo, monospace" font-size="20" font-weight="700">GIT REPOSITORY = PERMANENT SOURCE OF TRUTH</text>
+  <text x="720" y="468" text-anchor="middle" fill="#3f3f3a" font-family="Arial, sans-serif" font-size="21">Every verified answer is committed to design-document.md &amp; data/bashan-evidence.csv</text>
+
+  <line x1="245" y1="300" x2="245" y2="368" stroke="#111" stroke-width="2.5" stroke-dasharray="6,5" marker-end="url(#a2a-ink)"/>
+  <line x1="1195" y1="300" x2="1195" y2="368" stroke="#111" stroke-width="2.5" stroke-dasharray="6,5" marker-end="url(#a2a-ink)"/>
+</svg>

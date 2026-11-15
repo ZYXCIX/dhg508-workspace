@@ -1,0 +1,77 @@
+title: "Autonomous /goal, Feedback Loops, and Deployment"
+author: "Bo An · Lingnan University"
+date: "2026-11-11"
+lang: en
+license: CC BY-NC 4.0
+bibliography: [refs.bib]
+citationStyle: chicago-notes
+routerMode: hash
+figures: figures.yaml
+editions:
+  session-ten:
+    minutes: 70
+    list:
+      - { slide: s01-cover, minutes: 0.5 }
+      - { slide: s02-today, minutes: 1 }
+      - { slide: s03d-goal-how, minutes: 2 }
+      - { slide: s03e-goal-statement, minutes: 2 }
+      - { slide: s03f-plan-drift, minutes: 2 }
+      - { slide: s03-why-verify, minutes: 1 }
+      - { slide: s04-three-loops, minutes: 1 }
+      - { slide: m1-01-sec, minutes: 0.5 }
+      - { slide: m1-02-two-ways, minutes: 1 }
+      - { slide: m1-03-diagrams, minutes: 1 }
+      - { slide: m1-04-images, minutes: 1.5 }
+      - { slide: m1-05-excalidraw-setup, minutes: 1.5 }
+      - { slide: m1-06-excalidraw-loop, minutes: 1.5 }
+      - { slide: m1-07-visual-compare, minutes: 1.5 }
+      - { slide: m2-01-sec, minutes: 0.5 }
+      - { slide: m2-02-git-vs-live, minutes: 1 }
+      - { slide: m2-03-mcp-options, minutes: 1 }
+      - { slide: m2-04-mcp-config, minutes: 1 }
+      - { slide: m2-05-bashan-a2a, minutes: 1 }
+      - { slide: m2-06-truth-in-files, minutes: 1 }
+      - { slide: m3-01-sec, minutes: 0.5 }
+      - { slide: m3-02-agent-eyes, minutes: 1 }
+      - { slide: m3-03-how-browser-sees, minutes: 1 }
+      - { slide: m3-04-browser-mcp-setup, minutes: 1.5 }
+      - { slide: m3-05-explore-vs-test, minutes: 1 }
+      - { slide: m3-06-bashan-browser-run, minutes: 1 }
+      - { slide: m3-08-python-compile, minutes: 1 }
+      - { slide: m3-09-python-opencode-run, minutes: 1 }
+      - { slide: m3-10-frontend-engine-build, minutes: 1 }
+      - { slide: m4-01-sec, minutes: 0.5 }
+      - { slide: m4-02-three-test-levels, minutes: 1 }
+      - { slide: m4-03b-test-setup, minutes: 1.5 }
+      - { slide: m4-03-decouple-tree, minutes: 1 }
+      - { slide: m4-04-unit-concept, minutes: 1 }
+      - { slide: m4-05-bashan-expert-json, minutes: 1 }
+      - { slide: m4-06-bashan-unit-code, minutes: 1.5 }
+      - { slide: m4-07-bashan-unit-run, minutes: 1 }
+      - { slide: m4-08-integration-concept, minutes: 1 }
+      - { slide: m4-09-bashan-evidence-table, minutes: 1 }
+      - { slide: m4-10-bashan-integration-code, minutes: 1.5 }
+      - { slide: m4-11-llm-judge-drift, minutes: 1 }
+      - { slide: m4-12-e2e-playwright, minutes: 1.5 }
+      - { slide: m4-13-e2e-run-and-stacks, minutes: 1 }
+      - { slide: m4-13b-test-workbench, minutes: 1.5 }
+      - { slide: m5-01-sec, minutes: 0.5 }
+      - { slide: m5-02-deploy-tiers, minutes: 1 }
+      - { slide: m5-03-static-pages, minutes: 1.5 }
+      - { slide: m5-04-worker-why, minutes: 1 }
+      - { slide: m5-05-worker-bashan, minutes: 1.5 }
+      - { slide: m5-06-vps-when, minutes: 1 }
+      - { slide: m5-08-stripe-lemonsqueezy, minutes: 1 }
+      - { slide: m5-09-precompute-principle, minutes: 1 }
+      - { slide: m5-10-mythology-case, minutes: 1 }
+      - { slide: m5-11-mythology-pipeline, minutes: 1 }
+      - { slide: m5-11b-mythology-demo, minutes: 1 }
+      - { slide: m5-12-web-costs, minutes: 1 }
+      - { slide: m5-13-deploy-checklist, minutes: 1 }
+      - { slide: m6-01-sec, minutes: 0.5 }
+      - { slide: m6-02-two-weeks-left, minutes: 1 }
+      - { slide: m6-03-upgrade-bar, minutes: 1 }
+      - { slide: m6-03b-this-week, minutes: 1.5 }
+      - { slide: m6-04-assignment-four-parts, minutes: 1.5 }
+      - { slide: m6-05-feedback-to-test-bashan, minutes: 1 }
+      - { slide: m6-06-closing, minutes: 0.5 }

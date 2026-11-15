@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="560" viewBox="0 0 1440 560">
+  <defs>
+    <marker id="tl-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#111"/>
+    </marker>
+  </defs>
+  <rect width="1440" height="560" fill="#ffffff"/>
+
+  <!-- Left Phase: Ideation Loop -->
+  <rect x="24" y="36" width="656" height="500" fill="#faf9f5" stroke="#111" stroke-width="2.5"/>
+  <rect x="48" y="18" width="440" height="36" fill="#e31f27"/>
+  <text x="66" y="42" fill="#fff" font-family="ui-monospace, Menlo, monospace" font-size="18" font-weight="700">PHASE 1 · IDEATION LOOP (BEFORE CODE)</text>
+
+  <rect x="52" y="78" width="600" height="98" fill="#fff" stroke="#111" stroke-width="1.8"/>
+  <text x="74" y="112" fill="#e31f27" font-family="ui-monospace, Menlo, monospace" font-size="17" font-weight="700">01 · VERBAL RESTATEMENT &amp; INTERVIEW</text>
+  <text x="74" y="148" fill="#111" font-family="Arial, sans-serif" font-size="21">Agent restates scope, boundaries &amp; open questions first</text>
+
+  <rect x="52" y="194" width="600" height="98" fill="#fff" stroke="#111" stroke-width="1.8"/>
+  <text x="74" y="228" fill="#e31f27" font-family="ui-monospace, Menlo, monospace" font-size="17" font-weight="700">02 · MERMAID LOGIC &amp; STATE GRAPHS</text>
+  <text x="74" y="264" fill="#111" font-family="Arial, sans-serif" font-size="21">Audit dialogue branches, cutoffs &amp; dead ends visually</text>
+
+  <rect x="52" y="310" width="600" height="98" fill="#fff8f6" stroke="#e31f27" stroke-width="2.2"/>
+  <text x="74" y="344" fill="#e31f27" font-family="ui-monospace, Menlo, monospace" font-size="17" font-weight="700">03 · EXCALIDRAW SPATIAL CANVAS (MCP)</text>
+  <text x="74" y="380" fill="#111" font-family="Arial, sans-serif" font-size="21">Agent draws floor plans &amp; sections; you edit together</text>
+
+  <rect x="52" y="426" width="600" height="88" fill="#fff" stroke="#111" stroke-width="1.8"/>
+  <text x="74" y="458" fill="#e31f27" font-family="ui-monospace, Menlo, monospace" font-size="17" font-weight="700">04 · HTML ARCHITECTURE EXPLAINER SKILL</text>
+  <text x="74" y="492" fill="#111" font-family="Arial, sans-serif" font-size="21">Agent renders a visual HTML schematic of your whole system</text>
+
+  <!-- Center Arrow -->
+  <line x1="686" y1="286" x2="748" y2="286" stroke="#111" stroke-width="4" marker-end="url(#tl-arr)"/>
+
+  <!-- Right Phase: Execution & Verification Loop -->
+  <rect x="760" y="36" width="656" height="500" fill="#faf9f5" stroke="#111" stroke-width="2.5"/>
+  <rect x="784" y="18" width="490" height="36" fill="#111"/>
+  <text x="802" y="42" fill="#fff" font-family="ui-monospace, Menlo, monospace" font-size="18" font-weight="700">PHASE 2 · VERIFICATION LOOP (DURING /goal)</text>
+
+  <rect x="788" y="78" width="600" height="128" fill="#fff" stroke="#111" stroke-width="1.8"/>
+  <text x="810" y="114" fill="#111" font-family="ui-monospace, Menlo, monospace" font-size="17" font-weight="700">05 · AGENT ↔ AGENT SOURCE CHECK</text>
+  <text x="810" y="150" fill="#111" font-family="Arial, sans-serif" font-size="21">Game Agent asks Research Agent before writing dialogue</text>
+  <text x="810" y="182" fill="#6b6b66" font-family="ui-monospace, Menlo, monospace" font-size="16">Stops character conflation (Tobin vs. Kornai)</text>
+
+  <rect x="788" y="226" width="600" height="128" fill="#fff" stroke="#111" stroke-width="1.8"/>
+  <text x="810" y="262" fill="#111" font-family="ui-monospace, Menlo, monospace" font-size="17" font-weight="700">06 · COMPILER &amp; BROWSER EYES (MCP)</text>
+  <text x="810" y="298" fill="#111" font-family="Arial, sans-serif" font-size="21">Ruff / Mypy / tsc + Playwright MCP live inspection</text>
+  <text x="810" y="330" fill="#6b6b66" font-family="ui-monospace, Menlo, monospace" font-size="16">Catches 404s, console crashes &amp; clipped text</text>
+
+  <rect x="788" y="374" width="600" height="140" fill="#f0fdf4" stroke="#15803d" stroke-width="2.2"/>
+  <text x="810" y="410" fill="#15803d" font-family="ui-monospace, Menlo, monospace" font-size="17" font-weight="700">07 · AUTOMATED TESTS + LIVE DEPLOYMENT</text>
+  <text x="810" y="446" fill="#111" font-family="Arial, sans-serif" font-size="21">Unit → Integration → Playwright E2E + Cloudflare</text>
+  <text x="810" y="482" fill="#15803d" font-family="ui-monospace, Menlo, monospace" font-size="16">Every bug report becomes a permanent test</text>
+</svg>
